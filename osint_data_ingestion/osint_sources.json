@@ -1,0 +1,56 @@
+{
+    "sources": [
+      {
+        "name": "Have I Been Pwned",
+        "type": "API",
+        "url": "https://haveibeenpwned.com/api/v3/breachedaccount/{query}",
+        "key_required": true,
+        "api_key": "YOUR_HIBP_API_KEY",
+        "rate_limit": 2
+      },
+      {
+        "name": "Shodan",
+        "type": "API",
+        "url": "https://api.shodan.io/shodan/host/{query}?key=YOUR_SHODAN_API_KEY",
+        "key_required": true,
+        "api_key": "YOUR_SHODAN_API_KEY",
+        "rate_limit": 1
+      },
+      {
+        "name": "EmailRep",
+        "type": "API",
+        "url": "https://emailrep.io/{query}",
+        "key_required": false,
+        "rate_limit": 1
+      },
+      {
+        "name": "PhoneInfoga",
+        "type": "API",
+        "url": "https://api.phoneinfoga.com/v1/lookup/{query}",
+        "key_required": false,
+        "rate_limit": 3
+      },
+      {
+        "name": "Sherlock",
+        "type": "CLI",
+        "command": "sherlock yeshayaav --json",
+        "output_format": "json",
+        "rate_limit": 3
+      },
+      {
+        "name": "OnionScan",
+        "type": "CLI",
+        "command": "onionscan --json {query}",
+        "output_format": "json",
+        "rate_limit": 5
+      },
+      {
+        "name": "GHunt",
+        "type": "CLI",
+        "command": "python3 ghunt.py email {query}",
+        "output_format": "text",
+        "rate_limit": 4
+      }
+    ]
+  }
+  

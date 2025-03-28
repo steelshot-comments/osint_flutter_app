@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OSINT Graph</title>
+    <script src="https://unpkg.com/cytoscape@3.21.0/dist/cytoscape.min.js"></script>
+    <script>
+        window.switchToLayout = function (layout) {
+            cy.layout({ name: layout, animate:true }).run();
+        }
+
+        window.updateGraphData = function (data) {
+            const parsedData = JSON.parse(data);
+
+            const elements = [];
+
+            parsedData.nodes.forEach(node => {
+                elements.push({
+                    data: {
+                        id: node.id,
+                        label: node.label[0] || "Unnamed Node",
+                        properties: node.properties && typeof node.properties === 'object'
+                            ? { ...node.properties }
+                            : {}
+                    }
+                });
+            });
+
+            parsedData.edges.forEach(edge => {
+                elements.push({
+                    data: {
+                        id: edge.id,
+                        source: edge.source,
+                        target: edge.target,
+                        label: edge.type
+                    }
+                });
+            });
+
+            cy.elements().remove();
+            cy.add(elements);
+            cy.layout({ name: 'cose', animate: true}).run();
+        }
+
+        
+    </script>
+</head>
+
+<body>
+    <div id="cy" style="width: 100%; height: 100vh;"></div>
+
+    <script>
+        // console.log("Update graph data is of type: " + typeof window.updateGraphData);
+        const cy = cytoscape({
+            container: document.getElementById('cy'),
+            elements: [], // Initially empty, will be filled dynamically
+            style: [
+                {
+                    selector: 'node',
+                    style: {
+                        'background-color': function (ele) {
+                            return getColorForType(ele.data('label'));
+                        },
+                        'label': 'data(label)',
+                        'color': '#fff',
+                        'text-outline-color': '#333',
+                        'text-outline-width': 2
+                    }
+                },
+                {
+                    selector: 'edge',
+                    style: {
+                        'width': 2,
+                        'label': 'data(type)',
+                        'line-color': '#ccc',
+                        'target-arrow-shape': 'triangle',
+                        'target-arrow-color': '#ccc',
+                        'curve-style': 'bezier'
+                    }
+                }
+            ],
+            // layout: { name: 'cose' }
+        });
+
+        cy.on('tap', 'node', function (event) {
+            var node = event.target;
+            var nodeData = {
+                id: node.id(),
+                label: node.data('label') || {},
+                properties: node.data('properties') || {},
+                transforms: getAvailableTransforms(node.data('label')) || {}
+            };
+            if (window.FlutterGraphChannel) {
+                window.FlutterGraphChannel.postMessage(JSON.stringify(nodeData));
+            }
+            else {
+                alert("no flutter :(");
+            }
+        });
+
+        // cy.on('tap', function (event) {
+        //     console.log('tap on background');
+        //     addNode('13', 'New Node');
+        // });
+
+        function getAvailableTransforms(type) {
+            var transforms = {
+                'Person': ['Find Social Media', 'Lookup Address', 'Check Criminal Records'],
+                'phone_number': ['Reverse Lookup', 'Find Carrier', 'Geolocation'],
+                'Location': ['Nearby Crimes', 'Check Businesses'],
+                'social_media': ['Find Linked Accounts', 'Check Activity'],
+                'transaction': ['Trace Source', 'Check Fraud']
+            };
+            return transforms[type] || [];
+        }
+
+
+        // Function to update node label dynamically
+        function updateNodeLabel(node) {
+            let properties = node.data('properties');
+            let formattedProperties = Object.entries(properties)
+                .map(([key, value]) => `${key}: ${value}`)
+                .join('\n');
+
+            node.data('label', `${node.data('label')}\n${formattedProperties}`);
+        }
+
+
+        // Function to add new nodes dynamically
+        function addNode(id, label) {
+            cy.add({ group: 'nodes', data: { id: id, label: label }, position: event.position});
+            cy.layout({ name: 'cose' }).run();
+        }
+
+        // Function to add new edges
+        function addEdge(source, target) {
+            cy.add({ data: { id: source + target, source: source, target: target } });
+            cy.layout({ name: 'cose' }).run();
+        }
+
+        // Function to receive data from Flutter WebView
+        window.receiveData = function(data) {
+            console.log(data);
+            let parsed = JSON.parse(data);
+            addNode(parsed.id, parsed.label);
+        }
+
+        // Function to generate unique colors for each node type
+        const colorMap = {}; // Store assigned colors
+        function getColorForType(type) {
+            if (!colorMap[type]) {
+                colorMap[type] = generateRandomColor();
+            }
+            return colorMap[type];
+        }
+
+        // Function to generate a random hex color
+        function generateRandomColor() {
+            return '#' + Math.floor(Math.random() * 16777215).toString(16);
+        }
+
+        window.searchGraph = function(query) {
+            let nodes = cy.nodes().filter(node => node.data('label').includes(query) || node.data('properties') && Object.values(node.data('properties')).some(value => value.includes(query)));
+            cy.elements().removeClass('highlighted');
+            nodes.addClass('highlighted');
+            cy.fit(nodes, 50);
+        }
+
+        function filter() {
+            let filterPanel = document.getElementById('filter-panel');
+            if (filterPanel) {
+                filterPanel.style.display = filterPanel.style.display === 'none' ? 'block' : 'none';
+            }
+        }
+    </script>
+</body>
+
+</html>
