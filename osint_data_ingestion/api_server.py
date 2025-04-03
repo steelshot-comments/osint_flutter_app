@@ -1,9 +1,10 @@
-from fastapi import FastAPI,WebSocket, WebSocketDisconnect
+from fastapi import FastAPI,WebSocket, WebSocketDisconnect, UploadFile, File, HTTPException
 from celery.result import AsyncResult
-from worker import run_cli_tool
+from worker import run_tool, celery
 import sqlite3
 import json
 import asyncio
+import subprocess
 
 active_connections = {}
 
@@ -28,16 +29,30 @@ def fetch_results():
         })
     return results
 
+# Create root endpoint
+@app.get("/")
+def read_root():
+    # explain the routes
+    return {
+        "message": "Welcome to the OSINT Data Ingestion API!",
+        "routes": {
+            "/run/{source_name}/{query}": "Run an OSINT task with the specified source and query.",
+            "/result/{task_id}": "Get the result of a task by its ID.",
+            "/results": "Fetch all results from the database.",
+            "/ws/transforms/{node_id}": "WebSocket endpoint for transform updates."
+        }
+    }
+
 @app.get("/run/{source_name}/{query}")
 def run_osint_task(source_name: str, query: str):
-    task = run_cli_tool.delay(source_name, query)  # Push task to Celery
+    task = run_tool.delay(source_name, query)  # Push task to Celery
     return {"task_id": task.id}
 
 @app.get("/result/{task_id}")
 def get_task_result(task_id: str):
-    task_result = AsyncResult(task_id)
+    task_result = AsyncResult(task_id, app=celery)
     if task_result.ready():
-        return {"status": "completed", "result": task_result.result}
+        return {"status": "SUCCESS", "result": task_result.result}
     return {"status": "pending"}
 
 @app.get("/results")

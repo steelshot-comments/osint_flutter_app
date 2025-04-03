@@ -6,12 +6,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>OSINT Graph</title>
     <script src="https://unpkg.com/cytoscape@3.21.0/dist/cytoscape.min.js"></script>
+    <!-- <script src="https://unpkg.com/webcola/WebCola/cola.min.js"></script>
+    <script src="https://unpkg.com/cytoscape-cola/cytoscape-cola.js"></script> -->
+
     <script>
         window.switchToLayout = function (layout) {
-            cy.layout({ name: layout, animate:true }).run();
+            cy.layout({ name: layout, animate: true }).run();
         }
 
         window.updateGraphData = function (data) {
+            console.log(data);
             const parsedData = JSON.parse(data);
 
             const elements = [];
@@ -41,10 +45,10 @@
 
             cy.elements().remove();
             cy.add(elements);
-            cy.layout({ name: 'cose', animate: true}).run();
+            cy.layout({ name: 'cose', animate: true }).run();
         }
 
-        
+
     </script>
 </head>
 
@@ -81,7 +85,7 @@
                     }
                 }
             ],
-            // layout: { name: 'cose' }
+            layout: { name: 'cose' }
         });
 
         cy.on('tap', 'node', function (event) {
@@ -99,6 +103,40 @@
                 alert("no flutter :(");
             }
         });
+
+        // cy.on('dragfree', 'node', function (event) {
+        //     let node = event.target;
+        //     cy.layout({
+        //         name: 'cola',
+        //         animate: true,
+        //         fit: false, // Prevents zooming in
+        //     }).run();
+        // });
+
+        // cy.on('drag', 'node', function (event) {
+        //     let draggedNode = event.target;
+        //     let nodePosition = draggedNode.position();
+
+        //     cy.nodes().not(draggedNode).forEach(function (otherNode) {
+        //         let otherPos = otherNode.position();
+
+        //         let dx = otherPos.x - nodePosition.x;
+        //         let dy = otherPos.y - nodePosition.y;
+        //         let distance = Math.sqrt(dx * dx + dy * dy);
+
+        //         if (distance < 150) { // If too close, push away
+        //             let angle = Math.atan2(dy, dx);
+        //             let moveX = Math.cos(angle) * 30; // Adjust push strength
+        //             let moveY = Math.sin(angle) * 30;
+
+        //             otherNode.position({
+        //                 x: otherPos.x + moveX,
+        //                 y: otherPos.y + moveY
+        //             });
+        //         }
+        //     });
+        // });
+
 
         // cy.on('tap', function (event) {
         //     console.log('tap on background');
@@ -130,7 +168,7 @@
 
         // Function to add new nodes dynamically
         function addNode(id, label) {
-            cy.add({ group: 'nodes', data: { id: id, label: label }, position: event.position});
+            cy.add({ group: 'nodes', data: { id: id, label: label }, position: event.position });
             cy.layout({ name: 'cose' }).run();
         }
 
@@ -141,7 +179,7 @@
         }
 
         // Function to receive data from Flutter WebView
-        window.receiveData = function(data) {
+        window.receiveData = function (data) {
             console.log(data);
             let parsed = JSON.parse(data);
             addNode(parsed.id, parsed.label);
@@ -161,18 +199,21 @@
             return '#' + Math.floor(Math.random() * 16777215).toString(16);
         }
 
-        window.searchGraph = function(query) {
-            let nodes = cy.nodes().filter(node => node.data('label').includes(query) || node.data('properties') && Object.values(node.data('properties')).some(value => value.includes(query)));
+        window.searchGraph = function (query, filter) {
+            let nodes
+            if (query.length) {
+                nodes = cy.nodes().filter(node => node.data('label').includes(query) ||
+                    node.data('properties') && Object.values(node.data('properties')).some(value => value.includes(query)));
+            }
+            // check if filter is not empty
+            // filter can be display relationships, nodes, type of node or relationship
             cy.elements().removeClass('highlighted');
             nodes.addClass('highlighted');
             cy.fit(nodes, 50);
         }
 
         function filter() {
-            let filterPanel = document.getElementById('filter-panel');
-            if (filterPanel) {
-                filterPanel.style.display = filterPanel.style.display === 'none' ? 'block' : 'none';
-            }
+
         }
     </script>
 </body>

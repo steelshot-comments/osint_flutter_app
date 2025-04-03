@@ -5,9 +5,22 @@ import requests
 import subprocess
 from celery import Celery
 from subprocess import run, PIPE
+from neo4j import GraphDatabase
+# env file
+import os
+from dotenv import load_dotenv
+load_dotenv()
+# Load environment variables
+NEO4J_URI = os.getenv("NEO4J_URI")
+NEO4J_USER = os.getenv("NEO4J_USER")
+NEO4J_PASSWORD = os.getenv("NEO4J_PASSWORD")
 
 # Initialize Celery with Redis
-celery = Celery("osint_worker", broker="redis://localhost:6379/0")
+celery = Celery("worker", broker="redis://localhost:6379/0", result_backend="redis://localhost:6379/0")
+
+celery.conf.update(
+    result_backend="redis://localhost:6379/0"
+)
 
 # Connect to Redis
 redis_client = redis.Redis(host="localhost", port=6379, db=0)
@@ -58,7 +71,7 @@ def fetch_api_data(source, query):
 
 # Celery Task: Run CLI Tool or API
 @celery.task
-def run_cli_tool(source_name, query):
+def run_tool(source_name, query):
     sources = load_sources()  # Load sources
 
     source = next((s for s in sources if s["name"] == source_name), None)
@@ -72,12 +85,39 @@ def run_cli_tool(source_name, query):
         result = subprocess.run(command, shell=True, stdout=PIPE, stderr=PIPE, text=True)
         if result.returncode == 0:
             output = result.stdout.strip()
-            result = json.loads(output) if source["output_format"] == "json" else {"raw_output": output}
+            if output:
+                try:
+                    result = json.loads(output) #if source["output_format"] == "json" else {"raw_output": output}
+                except json.JSONDecodeError:
+                    result = {"error": "Invalid JSON output", "raw_output": output}
+            else:
+                result = {"error": "Empty output from command"}
         else:
             result = {"error": result.stderr.strip()}
 
     save_result(source_name, query, result)  # Save result
+    print(result)
     return result
+
+def store_scan_results(scan_results):
+    """Stores Masscan results in Neo4j."""
+    driver = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD))
+
+    with driver.session() as session:
+        for result in scan_results:
+            ip = result["ip"]
+            for port_info in result.get("ports", []):
+                port = port_info["port"]
+                session.run(
+                    """
+                    MERGE (h:Host {ip: $ip})
+                    MERGE (p:Port {number: $port})
+                    MERGE (h)-[:HAS_OPEN_PORT]->(p)
+                    """,
+                    ip=ip, port=port
+                )
+
+    driver.close()
 
 # Initialize database when worker starts
 init_db()

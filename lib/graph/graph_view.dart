@@ -8,6 +8,8 @@ import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
+import './filters.dart';
+import 'package:flutter/services.dart';
 import './graph_provider.dart';
 part 'node_details_panel.dart';
 part 'tabs.dart';
@@ -36,26 +38,25 @@ class _GraphViewState extends State<GraphView> {
       if (response.statusCode == 200) {
         final Map<String, dynamic> data = json.decode(response.body);
 
-        if (data.containsKey('nodes') && data.containsKey('edges')) {
+        if (data['nodes'] is List && data['edges'] is List) {
           final graphProvider =
               Provider.of<GraphProvider>(context, listen: false);
 
-          // ✅ Safely cast the lists
+          // Safely cast the lists
           List<Map<String, dynamic>> nodes = (data['nodes'] as List)
               .map((e) => Map<String, dynamic>.from(e))
               .toList();
           List<Map<String, dynamic>> edges = (data['edges'] as List)
               .map((e) => Map<String, dynamic>.from(e))
               .toList();
-
           graphProvider.setGraphData(nodes, edges);
 
-          // ✅ Convert JSON to a string, escaping special characters
+          // Convert JSON to a string, escaping special characters
           final jsonData = jsonEncode(graphProvider.toJson())
               .replaceAll("'", r"\'")
               .replaceAll('"', r'\"');
 
-          // ✅ Ensure the function is called correctly in JavaScript
+          // Ensure the function is called correctly in JavaScript
           _controller.runJavaScript("window.updateGraphData(\"$jsonData\")");
         } else {
           print("Invalid response structure: Missing 'nodes' or 'edges'");
@@ -92,24 +93,6 @@ class _GraphViewState extends State<GraphView> {
     });
   }
 
-  void _openSearchDialog() {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text("Search"),
-          content: TextField(
-            decoration: InputDecoration(hintText: "Enter search query"),
-            onSubmitted: (query) {
-              Navigator.pop(context);
-              _controller.runJavaScript("window.searchGraph('$query')");
-            },
-          ),
-        );
-      },
-    );
-  }
-
   void changeLayout(String layoutName) {
     _controller.runJavaScript("window.switchToLayout('$layoutName')");
   }
@@ -143,6 +126,8 @@ class _GraphViewState extends State<GraphView> {
       )
       ..loadFlutterAsset('assets/web/graph.html');
 
+    // add webview options to reduce memory usage
+
     _controller.setNavigationDelegate(
       NavigationDelegate(
         onPageFinished: (url) {
@@ -155,11 +140,8 @@ class _GraphViewState extends State<GraphView> {
   void _addNode() {
     // create json object
     // JSON
-    var newNode = {
-      "id": "13",
-      "label": "Wow",
-    };
-    _controller.runJavaScript("window.receiveData($newNode)");
+    
+    // _controller.runJavaScript("window.receiveData($newNode)");
   }
 
   @override
@@ -176,50 +158,85 @@ class _GraphViewState extends State<GraphView> {
                 child: Tabs(),
               ),
             ),
-      body: Stack(
+      body: Column(
         children: [
-          Positioned.fill(
-            child: isTableView
-                ? TableView()
-                : WebViewWidget(controller: _controller),
-          ),
-          // Show NodeDetailsPanel only when a node is selected
-          if (selectedNode != null)
-            Positioned(
-              bottom: 50,
-              left: 0,
-              right: 0,
-              child: NodeDetailsPanel(
-                node: selectedNode!,
-                onClose: closeNodeDetails, // Pass the close function
-              ),
-            ),
-          Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
-            child: Tools(
-              functions: [
-                _openSearchDialog,
-                () => toggleFilterPanel(context),
-                () => isTableViewMode(),
-                () => changeLayout('cose'),
-                () => changeLayout('breadthfirst'),
-                () => changeLayout('random'),
-                () => changeLayout('grid'),
-                () => changeLayout('circle'),
-                () => changeLayout('concentric'),
-                _toggleMapMode
+          Expanded(
+            child: Stack(
+              children: [
+                Positioned.fill(
+                  child: isTableView
+                      ? TableView()
+                      : WebViewWidget(controller: _controller),
+                ),
+                // Show NodeDetailsPanel only when a node is selected
+                if (selectedNode != null)
+                  Positioned(
+                    bottom: 50,
+                    left: 0,
+                    right: 0,
+                    child: NodeDetailsPanel(
+                      node: selectedNode!,
+                      onClose: closeNodeDetails, // Pass the close function
+                    ),
+                  ),
               ],
             ),
           ),
+          Column(children: [
+            Visibility(
+              visible: filterPanelVisible,
+              child: FilterPanel(),
+            ),
+            Tools(
+              tools: [
+                ToolItem(
+                    icon: Icons.search,
+                    onPressed: () => toggleFilterPanel(context),
+                    tooltip: "Search"),
+                ToolItem(
+                    icon: Icons.table_chart,
+                    onPressed: () => isTableViewMode(),
+                    tooltip: "Table View"),
+                ToolItem(
+                    icon: Icons.graphic_eq,
+                    onPressed: () => changeLayout('cose'),
+                    tooltip: "Normal Graph View"),
+                ToolItem(
+                    icon: Icons.hub,
+                    onPressed: () => changeLayout('breadthfirst'),
+                    tooltip: "Hierarchical Graph View"),
+                ToolItem(
+                    icon: Icons.shuffle,
+                    onPressed: () => changeLayout('random'),
+                    tooltip: "Random"),
+                ToolItem(
+                    icon: Icons.grid_3x3,
+                    onPressed: () => changeLayout('grid'),
+                    tooltip: "Grid"),
+                ToolItem(
+                    icon: Icons.circle,
+                    onPressed: () => changeLayout('circle'),
+                    tooltip: "Circle"),
+                ToolItem(
+                    icon: Icons.circle,
+                    onPressed: () => changeLayout('concentric'),
+                    tooltip: "Concentric"),
+                ToolItem(
+                  icon: Icons.map,
+                  onPressed: _toggleMapMode,
+                  tooltip: "Zen Mode",
+                ),
+              ],
+            ),
+          ]),
         ],
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed:
-            _addNode,
-            // _controller.reload,
-        child: Icon(Icons.refresh),
+        onPressed: (){
+          Navigator.of(context).pushNamed("/addNode");
+        },
+        // _controller.reload,
+        child: Icon(Icons.add),
       ),
     );
   }

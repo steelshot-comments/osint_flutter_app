@@ -7,7 +7,7 @@ class Tabs extends StatefulWidget {
   State<Tabs> createState() => _TabsState();
 }
 
-class _TabsState extends State<Tabs> with SingleTickerProviderStateMixin {
+class _TabsState extends State<Tabs> with TickerProviderStateMixin {
   List<String> _tabs = ["Tab 1"];
   late TabController _tabController;
   int _tabCount = 1;
@@ -82,6 +82,7 @@ class _TabsState extends State<Tabs> with SingleTickerProviderStateMixin {
 
   void _deleteTab(int index) {
     if (_tabs.length == 1) {
+      HapticFeedback.mediumImpact();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Cannot delete the last tab!")),
       );
@@ -139,6 +140,8 @@ class _TabsState extends State<Tabs> with SingleTickerProviderStateMixin {
             child: TabBar(
               controller: _tabController,
               isScrollable: true,
+              
+              // indicatorSize: TabBarIndicatorSize.tab,
               tabs: _tabs.map((name) {
                 int index = _tabs.indexOf(name);
                 return GestureDetector(

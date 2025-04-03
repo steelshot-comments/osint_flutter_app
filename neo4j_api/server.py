@@ -78,7 +78,7 @@ async def get_graph():
     nodes = []
     edges = []
     for record in result:
-        print(record)
+        # print(record)
         if record["n"]:
             nodes.append({
                 "id": str(record["n"].id),

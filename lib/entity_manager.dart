@@ -1,110 +1,232 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '/graph/graph_provider.dart';
 
-class EntityManagerPage extends StatefulWidget {
+class AddNodePage extends StatefulWidget {
   @override
-  _EntityManagerPageState createState() => _EntityManagerPageState();
+  _AddNodePageState createState() => _AddNodePageState();
 }
 
-class _EntityManagerPageState extends State<EntityManagerPage> {
-  List<Map<String, dynamic>> entities = [
-    {'id': 1, 'type': 'Person', 'name': 'John Doe', 'details': {'Age': '30', 'Gender': 'Male'}},
-    {'id': 2, 'type': 'Phone Number', 'name': '+123456789', 'details': {'Carrier': 'XYZ Telecom'}},
-    {'id': 3, 'type': 'Location', 'name': 'New York', 'details': {'Coordinates': '40.7128° N, 74.0060° W'}},
-    {'id': 4, 'type': 'Social Media Account', 'name': '@johndoe', 'details': {'Platform': 'Twitter'}},
-    {'id': 5, 'type': 'Transaction', 'name': 'Transaction #123', 'details': {'Amount': '500', 'Date': '2025-03-10'}},
-  ];
+class _AddNodePageState extends State<AddNodePage> {
+  List<NodeForm> nodes = [NodeForm(onRemove: () {})];
 
-  void _addEntity(String type, String name, Map<String, String> details) {
+  void addCard() {
     setState(() {
-      entities.add({'id': entities.length + 1, 'type': type, 'name': name, 'details': details});
+      nodes.add(NodeForm(onRemove: () => removeCard(nodes.length - 1)));
     });
   }
 
-  void _editEntity(int index, String name, Map<String, String> details) {
-    setState(() {
-      entities[index]['name'] = name;
-      entities[index]['details'] = details;
-    });
-  }
-
-  void _deleteEntity(int index) {
-    setState(() {
-      entities.removeAt(index);
-    });
-  }
-
-  void _showEntityDialog({int? index}) {
-    final _nameController = TextEditingController(
-        text: index != null ? entities[index]['name'] : '');
-    final Map<String, TextEditingController> _detailControllers = {};
-
-    if (index != null) {
-      entities[index]['details'].forEach((key, value) {
-        _detailControllers[key] = TextEditingController(text: value);
+  void removeCard(int index) {
+    if (index >= 0 && index < nodes.length) {
+      setState(() {
+        nodes.removeAt(index);
       });
     }
+  }
 
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text(index == null ? 'Add Entity' : 'Edit Entity'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(controller: _nameController, decoration: InputDecoration(labelText: 'Name')),
-              ..._detailControllers.entries.map((entry) => TextField(
-                    controller: entry.value,
-                    decoration: InputDecoration(labelText: entry.key),
-                  )),
-            ],
-          ),
-          actions: [
-            TextButton(onPressed: () => Navigator.pop(context), child: Text('Cancel')),
-            TextButton(
-              onPressed: () {
-                final name = _nameController.text;
-                final details = {for (var entry in _detailControllers.entries) entry.key: entry.value.text};
-                if (index == null) {
-                  _addEntity('Custom', name, details);
-                } else {
-                  _editEntity(index, name, details);
-                }
-                Navigator.pop(context);
-              },
-              child: Text('Save'),
-            ),
-          ],
-        );
-      },
-    );
+  void submitNodes() {
+    List<Map<String, dynamic>> nodeData = [];
+    // for (var node in nodes) {
+    //   if (!node.validateAndFocus()) {
+    //     return;
+    //   }
+    //   nodeData.add(node.getNodeData());
+    // }
+    Provider.of<GraphProvider>(context, listen: false).addNodes(nodeData);
+    setState(() {
+      nodes = [NodeForm(onRemove: () {})];
+    });
+    Navigator.of(context).pop();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Entities')),
-      body: ListView.builder(
-        itemCount: entities.length,
-        itemBuilder: (context, index) {
-          final entity = entities[index];
-          return ListTile(
-            title: Text('${entity['type']}: ${entity['name']}'),
-            subtitle: Text(entity['details'].entries.map((e) => '${e.key}: ${e.value}').join(', ')),
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                IconButton(icon: Icon(Icons.edit), onPressed: () => _showEntityDialog(index: index)),
-                IconButton(icon: Icon(Icons.delete), onPressed: () => _deleteEntity(index)),
-              ],
+      appBar: AppBar(title: Text("Add Nodes")),
+      body: Column(
+          children: [
+            Expanded(
+              child: ListView.builder(
+                itemCount: nodes.length,
+                
+                itemBuilder: (context, index) => nodes[index],
+              ),
             ),
-          );
-        },
+            Row(
+              children: [
+                ElevatedButton(
+                  onPressed: addCard,
+                  child: Text("Add Another Node"),
+                ),
+                ElevatedButton(
+                  onPressed: submitNodes,
+                  child: Text("Submit"),
+                ),
+              ],
+            )
+          ],
+        ),
+    );
+  }
+}
+
+class NodeForm extends StatefulWidget {
+  final VoidCallback onRemove;
+
+  const NodeForm({required this.onRemove});
+
+  @override
+  _NodeFormState createState() => _NodeFormState();
+
+  bool validateAndFocus() => _NodeFormState().validateAndFocus();
+  Map<String, dynamic> getNodeData() => _NodeFormState().getNodeData();
+}
+
+class _NodeFormState extends State<NodeForm> {
+  bool isExpanded = true;
+  final TextEditingController nameController = TextEditingController();
+  final TextEditingController labelController = TextEditingController();
+  List<Map<String, TextEditingController>> properties = [];
+  final GlobalKey<FormState> formKey = GlobalKey<FormState>();
+
+  void addProperty() {
+    setState(() {
+      properties.add({
+        "name": TextEditingController(),
+        "value": TextEditingController(),
+      });
+    });
+  }
+
+  void removeProperty(int index) {
+    setState(() {
+      properties.removeAt(index);
+    });
+  }
+
+  bool validateAndFocus() {
+    if (nameController.text.trim().isEmpty) {
+      FocusScope.of(context).requestFocus(FocusNode());
+      return false;
+    }
+    if (labelController.text.trim().isEmpty) {
+      FocusScope.of(context).requestFocus(FocusNode());
+      return false;
+    }
+    for (var property in properties) {
+      if (property["name"]!.text.trim().isEmpty ||
+          property["value"]!.text.trim().isEmpty) {
+        FocusScope.of(context).requestFocus(FocusNode());
+        return false;
+      }
+    }
+    return true;
+  }
+
+  Map<String, dynamic> getNodeData() {
+    return {
+      "name": nameController.text.trim(),
+      "label": labelController.text.trim(),
+      "properties": properties
+          .map((p) => {
+                "name": p["name"]!.text.trim(),
+                "value": p["value"]!.text.trim()
+              })
+          .toList(),
+    };
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final graphProvider = Provider.of<GraphProvider>(context);
+
+    return ExpansionTile(
+      initiallyExpanded: true,
+      title: Text("New node"),
+      trailing: IconButton(
+        icon: Icon(Icons.close),
+        onPressed: widget.onRemove,
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _showEntityDialog(),
-        child: Icon(Icons.add),
-      ),
+      children: [
+        Padding(
+          padding: EdgeInsets.fromLTRB(16, 0, 16, 4),
+          child: Column(
+            children: [
+              Form(
+                key: formKey,
+                child: Column(
+                  children: [
+                    TextFormField(
+                      controller: nameController,
+                      decoration: InputDecoration(labelText: "Name"),
+                      validator: (value) =>
+                          value!.trim().isEmpty ? "Required" : null,
+                    ),
+                    DropdownButtonFormField<String>(
+                      value: labelController.text.isEmpty
+                          ? null
+                          : labelController.text,
+                      onChanged: (value) {
+                        setState(() {
+                          labelController.text = value ?? "";
+                        });
+                      },
+                      onSaved: (value) {
+                        labelController.text = value ?? "";
+                      },
+                      items: graphProvider.nodeLabels.map((label) {
+                        return DropdownMenuItem(
+                          value: label,
+                          child: Text(label),
+                        );
+                      }).toList(),
+                      decoration: InputDecoration(
+                        labelText: "Label",
+                      ),
+                    ),
+                    SizedBox(height: 10),
+                    Column(
+                      children: List.generate(properties.length, (index) {
+                        return Row(
+                          children: [
+                            Expanded(
+                              child: TextFormField(
+                                controller: properties[index]["name"],
+                                decoration:
+                                    InputDecoration(labelText: "Property Name"),
+                                validator: (value) =>
+                                    value!.trim().isEmpty ? "Required" : null,
+                              ),
+                            ),
+                            SizedBox(width: 10),
+                            Expanded(
+                              child: TextFormField(
+                                controller: properties[index]["value"],
+                                decoration:
+                                    InputDecoration(labelText: "Property Value"),
+                                validator: (value) =>
+                                    value!.trim().isEmpty ? "Required" : null,
+                              ),
+                            ),
+                            IconButton(
+                              icon: Icon(Icons.delete),
+                              onPressed: () => removeProperty(index),
+                            ),
+                          ],
+                        );
+                      }),
+                    ),
+                    ElevatedButton(
+                      onPressed: addProperty,
+                      child: Text("Add Property"),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
