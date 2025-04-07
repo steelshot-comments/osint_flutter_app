@@ -18,6 +18,7 @@ class _AddRecordState extends State<AddRecord> {
   final TextEditingController nameController = TextEditingController();
   final TextEditingController numberController = TextEditingController();
   final TextEditingController locationController = TextEditingController();
+  final Uri url = Uri.parse("http://192.168.0.114:5500/add-record");
 
   Future<void> _submitRecord() async {
     final String name = nameController.text.trim();
@@ -30,8 +31,6 @@ class _AddRecordState extends State<AddRecord> {
       );
       return;
     }
-
-    final Uri url = Uri.parse("https://looks-crafts-foreign-licking.trycloudflare.com/add-record");
 
     try {
       final response = await http.post(

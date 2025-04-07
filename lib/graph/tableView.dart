@@ -29,13 +29,6 @@ class _TableViewState extends State<TableView> with AutomaticKeepAliveClientMixi
               subtitle: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Text("Type: ${node['labels']?.join(', ') ?? 'Unknown'}"),
-                  // if (node.containsKey('relationships') && node['relationships'].isNotEmpty)
-                  //   Text(
-                  //     "Relationships: ${node['relationships']
-                  //             .map((rel) => "[${rel['type']}] → ${rel['target']}")
-                  //             .join(', ')}",
-                  //   ),
                   ...node['properties'].entries.where((e)=>e.key != 'name').map((property) {
                     return Text("${property.key}: ${property.value}");
                   }).toList(),

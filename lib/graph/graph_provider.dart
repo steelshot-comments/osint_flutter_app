@@ -2,34 +2,16 @@ import 'package:flutter/material.dart';
 
 class GraphProvider extends ChangeNotifier {
   List<Map<String, dynamic>> _nodes = [];
-  List<String> _nodeLabels = [
-    "Person",
-    "Trafficker",
-    "Victim",
-    "Client",
-    "Phone number",
-    "Transcation"
-  ];
+  List<String> _nodeLabels = [];
   List<Map<String, dynamic>> _edges = [];
-  List<String> _edgeLabels = [
-    "Uses",
-    "Has phone",
-    "Goes to",
-    "paid",
-    "visited"
-  ];
+  List<String> _edgeLabels = [];
   final Map<String, Color> _labelColors = {
     "Person": Colors.blue,
     "Trafficker": Colors.red,
     "Victim": Colors.yellow,
     "Client": Colors.teal,
     "Phone number": Colors.pink,
-    "Transcation": Colors.amber,
-    "Uses": Colors.lime,
-    "Has phone": Colors.deepOrange,
-    "Goes to": Colors.indigo,
-    "paid": Colors.deepPurple,
-    "visited": Colors.blueGrey
+    "Transcation": Colors.brown,
   };
 
   List<Map<String, dynamic>> get nodes => _nodes;
@@ -54,19 +36,14 @@ class GraphProvider extends ChangeNotifier {
   void setLabels(
       List<Map<String, dynamic>> nodes, List<Map<String, dynamic>> edges) {
     for (var node in nodes) {
+      print(node);
       for (var label in node['labels'] ?? []) {
         if (!_nodeLabels.contains(label)) {
           _nodeLabels.add(label);
         }
       }
     }
-    // for (var edge in edges) {
-    //   for (var label in edge['labels']) {
-    //     if (!_edgeLabels.contains(label)) {
-    //       _edgeLabels.add(label);
-    //     }
-    //   }
-    // }
+    notifyListeners();
   }
 
   void _assignColorsToLabels() {
@@ -115,7 +92,7 @@ class GraphProvider extends ChangeNotifier {
     Map<String, List<Map<String, dynamic>>> groupedNodes = {};
 
     for (var node in _nodes) {
-      List<String> labels = node['label'] is List<dynamic> ? List<String>.from(node['label']) : [];
+      List<String> labels = node['labels'] is List<dynamic> ? List<String>.from(node['labels']) : [];
 
       if (labels.isEmpty) {
         labels = ['Uncategorized']; // Default if no label exists

@@ -1,34 +1,32 @@
-// import 'package:final_project/entity_manager.dart';
-import 'package:final_project/entity_manager.dart';
+import 'package:final_project/addNode.dart';
 import 'package:final_project/graph/graph_provider.dart';
 import 'package:final_project/home_screen.dart';
 import 'package:final_project/policies_page.dart';
 import 'package:final_project/providers/api_provider.dart';
 import 'package:final_project/providers/theme_provider.dart';
 import 'package:final_project/settings_page.dart';
-import 'package:final_project/transforms_manager.dart';
+// import 'package:final_project/transforms_manager.dart';
 import 'package:final_project/transforms_timeline.dart';
 import 'package:flutter/material.dart';
-// import 'package:final_project/home_screen.dart';
-import 'package:final_project/auth/login.dart';
-// import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:final_project/auth/auth_screen.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:provider/provider.dart';
 // import 'package:webview_flutter/webview_flutter.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized(); // Ensures Flutter is ready
-  // final FlutterSecureStorage secureStorage = FlutterSecureStorage();
-  // String? accessToken = await secureStorage.read(key: "access_token");
-  // String? refreshToken = await secureStorage.read(key: "refresh_token");
+  final FlutterSecureStorage secureStorage = FlutterSecureStorage();
+  String? accessToken = await secureStorage.read(key: "access_token");
+  String? refreshToken = await secureStorage.read(key: "refresh_token");
 
-  // if (accessToken != null) {
-  //   debugPrint("Access token found!");
-  // } else {
-  //   // Refresh token if needed
-  //   final newToken = await refreshAccessToken();
-  //   accessToken =
-  //       newToken ?? accessToken; // Use the refreshed token if available
-  // }
+  if (accessToken != null) {
+    debugPrint("Access token found!");
+  } else {
+    // Refresh token if needed
+    final newToken = await refreshAccessToken();
+    accessToken =
+        newToken ?? accessToken; // Use the refreshed token if available
+  }
 
   // if (WebView.platform == null) {
   //   WebView.platform = SurfaceAndroidWebView();
@@ -41,16 +39,16 @@ void main() async {
       ChangeNotifierProvider(create: (_) => ThemeProvider()),
     ],
     child: MainApp(
-      // isLoggedIn: accessToken != null || refreshToken != null
+      isLoggedIn: accessToken != null || refreshToken != null
       ),
   ));
 }
 
 class MainApp extends StatelessWidget {
   const MainApp({super.key,
-  // required this.isLoggedIn
+  required this.isLoggedIn
   });
-  // final bool isLoggedIn;
+  final bool isLoggedIn;
 
   @override
   Widget build(BuildContext context) {
@@ -117,9 +115,9 @@ class MainApp extends StatelessWidget {
             actionTextColor: Colors.white,
           )),
       initialRoute: 
-      // isLoggedIn ? 
-      "/home" ,
-      // : "/login",
+      // isLoggedIn ?
+      "/home", //:
+      // "/login",
       routes: {
         "/login": (context) => LoginPage(),
         "/home": (context) => HomeScreen(),

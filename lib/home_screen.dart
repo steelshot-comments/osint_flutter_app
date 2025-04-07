@@ -1,9 +1,9 @@
 import 'package:final_project/graph/graph_view.dart';
-import 'package:final_project/map/map.dart';
+// import 'package:final_project/map/map.dart';
 import 'package:final_project/settings_page.dart';
-import 'package:final_project/view_data.dart';
+// import 'package:final_project/view_data.dart';
 import 'package:flutter/material.dart';
-import 'add_record.dart';
+// import 'add_record.dart';
 // import 'package:map_test/components/dropdown.dart';
 
 class HomeScreen extends StatefulWidget {

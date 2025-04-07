@@ -1,4 +1,4 @@
-part of 'login.dart';
+part of 'auth_screen.dart';
 
 Future<void> startPasskeyRegistration(String username) async {
   final response = await http.post(

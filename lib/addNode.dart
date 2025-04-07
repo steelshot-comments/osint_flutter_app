@@ -1,42 +1,85 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '/graph/graph_provider.dart';
+import 'package:http/http.dart' as http;
 
 class AddNodePage extends StatefulWidget {
+  const AddNodePage({super.key});
   @override
   _AddNodePageState createState() => _AddNodePageState();
 }
 
 class _AddNodePageState extends State<AddNodePage> {
-  List<NodeForm> nodes = [NodeForm(onRemove: () {})];
+  List<GlobalKey<_NodeFormState>> nodeKeys = [];
+  List<NodeForm> nodes = [];
+
+  @override
+  void initState() {
+    super.initState();
+    final key = GlobalKey<_NodeFormState>();
+    nodeKeys.add(key);
+    nodes.add(NodeForm(onRemove: () {}, key: key));
+  }
 
   void addCard() {
+    final key = GlobalKey<_NodeFormState>();
+    nodeKeys.add(key);
     setState(() {
-      nodes.add(NodeForm(onRemove: () => removeCard(nodes.length - 1)));
+      nodes.add(NodeForm(
+        onRemove: () => removeCard(nodes.length - 1),
+        key: key,
+      ));
     });
   }
 
   void removeCard(int index) {
     if (index >= 0 && index < nodes.length) {
       setState(() {
+        nodeKeys.removeAt(index);
         nodes.removeAt(index);
       });
     }
   }
 
-  void submitNodes() {
+  void submitNodes() async {
+    int id=1;
+    final Uri url = Uri.parse("http://192.168.0.114:5500/add-record/${id}/${id}/${id}");
     List<Map<String, dynamic>> nodeData = [];
-    // for (var node in nodes) {
-    //   if (!node.validateAndFocus()) {
-    //     return;
-    //   }
-    //   nodeData.add(node.getNodeData());
-    // }
-    Provider.of<GraphProvider>(context, listen: false).addNodes(nodeData);
-    setState(() {
-      nodes = [NodeForm(onRemove: () {})];
-    });
-    Navigator.of(context).pop();
+    for (final key in nodeKeys) {
+      final state = key.currentState;
+      if (state == null) {
+        print("State is null");
+        continue;
+      }
+      if (!state.validateAndFocus()) {
+        nodeData = [];
+        return;
+      }
+      nodeData.add(state.getNodeData());
+    }
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode(nodeData),
+      );
+
+      if (response.statusCode == 200) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Record added successfully!")),
+        );
+        Navigator.of(context).pop();
+      } else {
+        throw Exception("Failed to add record");
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Failed to connect: $e")),
+      );
+    }
   }
 
   @override
@@ -44,50 +87,46 @@ class _AddNodePageState extends State<AddNodePage> {
     return Scaffold(
       appBar: AppBar(title: Text("Add Nodes")),
       body: Column(
-          children: [
-            Expanded(
-              child: ListView.builder(
-                itemCount: nodes.length,
-                
-                itemBuilder: (context, index) => nodes[index],
-              ),
+        children: [
+          Expanded(
+            child: ListView.builder(
+              itemCount: nodes.length,
+              itemBuilder: (context, index) => nodes[index],
             ),
-            Row(
-              children: [
-                ElevatedButton(
-                  onPressed: addCard,
-                  child: Text("Add Another Node"),
-                ),
-                ElevatedButton(
-                  onPressed: submitNodes,
-                  child: Text("Submit"),
-                ),
-              ],
-            )
-          ],
-        ),
+          ),
+          Row(
+            children: [
+              ElevatedButton(
+                onPressed: addCard,
+                child: Text("Add Another Node"),
+              ),
+              ElevatedButton(
+                onPressed: submitNodes,
+                child: Text("Submit"),
+              ),
+            ],
+          )
+        ],
+      ),
     );
   }
 }
 
 class NodeForm extends StatefulWidget {
   final VoidCallback onRemove;
+  final GlobalKey<_NodeFormState> key;
 
-  const NodeForm({required this.onRemove});
+  const NodeForm({required this.onRemove, required this.key}) : super(key: key);
 
   @override
   _NodeFormState createState() => _NodeFormState();
-
-  bool validateAndFocus() => _NodeFormState().validateAndFocus();
-  Map<String, dynamic> getNodeData() => _NodeFormState().getNodeData();
 }
 
 class _NodeFormState extends State<NodeForm> {
   bool isExpanded = true;
-  final TextEditingController nameController = TextEditingController();
-  final TextEditingController labelController = TextEditingController();
   List<Map<String, TextEditingController>> properties = [];
   final GlobalKey<FormState> formKey = GlobalKey<FormState>();
+  String? selectedLabel = "";
 
   void addProperty() {
     setState(() {
@@ -105,11 +144,7 @@ class _NodeFormState extends State<NodeForm> {
   }
 
   bool validateAndFocus() {
-    if (nameController.text.trim().isEmpty) {
-      FocusScope.of(context).requestFocus(FocusNode());
-      return false;
-    }
-    if (labelController.text.trim().isEmpty) {
+    if (selectedLabel!.isEmpty) {
       FocusScope.of(context).requestFocus(FocusNode());
       return false;
     }
@@ -124,22 +159,18 @@ class _NodeFormState extends State<NodeForm> {
   }
 
   Map<String, dynamic> getNodeData() {
+    print(selectedLabel);
     return {
-      "name": nameController.text.trim(),
-      "label": labelController.text.trim(),
-      "properties": properties
-          .map((p) => {
-                "name": p["name"]!.text.trim(),
-                "value": p["value"]!.text.trim()
-              })
-          .toList(),
+      "labels": [selectedLabel],
+      "properties": {
+        for (var p in properties)
+          p["name"]!.text.trim(): p["value"]!.text.trim()
+      }
     };
   }
 
   @override
   Widget build(BuildContext context) {
-    final graphProvider = Provider.of<GraphProvider>(context);
-
     return ExpansionTile(
       initiallyExpanded: true,
       title: Text("New node"),
@@ -156,33 +187,30 @@ class _NodeFormState extends State<NodeForm> {
                 key: formKey,
                 child: Column(
                   children: [
-                    TextFormField(
-                      controller: nameController,
-                      decoration: InputDecoration(labelText: "Name"),
-                      validator: (value) =>
-                          value!.trim().isEmpty ? "Required" : null,
-                    ),
-                    DropdownButtonFormField<String>(
-                      value: labelController.text.isEmpty
-                          ? null
-                          : labelController.text,
-                      onChanged: (value) {
-                        setState(() {
-                          labelController.text = value ?? "";
-                        });
-                      },
-                      onSaved: (value) {
-                        labelController.text = value ?? "";
-                      },
-                      items: graphProvider.nodeLabels.map((label) {
-                        return DropdownMenuItem(
-                          value: label,
-                          child: Text(label),
+                    Consumer<GraphProvider>(
+                      builder: (context, graphProvider, child) {
+                        return DropdownButtonFormField<String>(
+                          value:
+                              graphProvider.nodeLabels.contains(selectedLabel)
+                                  ? selectedLabel
+                                  : null,
+                          onChanged: (value) {
+                            setState(() {
+                              selectedLabel = value;
+                            });
+                            print(selectedLabel);
+                          },
+                          items: graphProvider.nodeLabels.map((label) {
+                            return DropdownMenuItem(
+                              value: label,
+                              child: Text(label),
+                            );
+                          }).toList(),
+                          decoration: const InputDecoration(
+                            labelText: "Labels",
+                          ),
                         );
-                      }).toList(),
-                      decoration: InputDecoration(
-                        labelText: "Label",
-                      ),
+                      },
                     ),
                     SizedBox(height: 10),
                     Column(
@@ -202,8 +230,8 @@ class _NodeFormState extends State<NodeForm> {
                             Expanded(
                               child: TextFormField(
                                 controller: properties[index]["value"],
-                                decoration:
-                                    InputDecoration(labelText: "Property Value"),
+                                decoration: InputDecoration(
+                                    labelText: "Property Value"),
                                 validator: (value) =>
                                     value!.trim().isEmpty ? "Required" : null,
                               ),

@@ -1,4 +1,4 @@
-part of 'login.dart';
+part of 'auth_screen.dart';
 
 class PasskeySetup extends StatefulWidget {
   const PasskeySetup({super.key, required this.isSignUp, required this.username});

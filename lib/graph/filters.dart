@@ -10,24 +10,9 @@ class FilterPanel extends StatefulWidget {
 }
 
 class _FilterPanelState extends State<FilterPanel> {
-  List<String> nodeLabels = [];
-  List<String> edgeLabels = [];
-  Map<String, Color> colors= {};
+  Map<String, Color> colors = {};
   TextEditingController controller = TextEditingController();
 
-  @override
-  void initState() {
-    super.initState();
-    // Ensure Provider is accessed after widget is built
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final graphProvider = Provider.of<GraphProvider>(context, listen: false);
-      setState(() {
-        nodeLabels = [...List<String>.from(graphProvider.nodeLabels)];
-        edgeLabels = [...List<String>.from(graphProvider.edgeLabels)];
-        colors = graphProvider.labelColors;
-      });
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -50,37 +35,64 @@ class _FilterPanelState extends State<FilterPanel> {
           ],
         ),
         const SizedBox(height: 10),
+        // ElevatedButton(onPressed: (){context.read<GraphProvider>().notifyListeners();}, child: Text("Press")),
         // Filter chips inside a GridView
-        if(nodeLabels.isNotEmpty)
-          Text("Nodes", maxLines: 1,style: TextStyle(fontSize: 18), textAlign: TextAlign.left,),
-          Wrap(
-            alignment: WrapAlignment.start,
-            spacing: 8,
-            children: List.generate(nodeLabels.length, (int index){
-              return FilterChip(
-                backgroundColor: colors[nodeLabels[index]],
-                label: Text(nodeLabels[index]), // Fix: Wrap in Text()
-                onSelected: (bool selected) {
-                  // Handle filter selection
-                },
-              );
-            }),
-          ),
-        if(edgeLabels.isNotEmpty)
-          Text("Relationships", maxLines: 1,style: TextStyle(fontSize: 18), textAlign: TextAlign.left,),
-          Wrap(
-            alignment: WrapAlignment.start,
-            spacing: 8,
-            children: List.generate(edgeLabels.length, (int index){
-              return FilterChip(
-                backgroundColor: colors[edgeLabels[index]],
-                label: Text(edgeLabels[index]), // Fix: Wrap in Text()
-                onSelected: (bool selected) {
-                  // Handle filter selection
-                },
-              );
-            }),
-          )
+        Consumer<GraphProvider>(builder: (context, graphProvider, child) {
+          final nodeLabels = graphProvider.nodeLabels;
+          final edgeLabels = graphProvider.edgeLabels;
+          final colors = graphProvider.labelColors;
+          // print("----------- $nodeLabels -------------");  
+
+          if (nodeLabels.isEmpty && edgeLabels.isEmpty) {
+            return Text(
+                "No labels or edges found"); // or empty container, skeleton loader, etc.
+          }
+
+          return Column(
+            children: [
+              if (nodeLabels.isNotEmpty)
+                Text(
+                  "Nodes",
+                  maxLines: 1,
+                  style: TextStyle(fontSize: 18),
+                  textAlign: TextAlign.left,
+                ),
+                Wrap(
+                  alignment: WrapAlignment.start,
+                  spacing: 8,
+                  children: List.generate(nodeLabels.length, (int index) {
+                    return FilterChip(
+                      backgroundColor: colors[nodeLabels[index]],
+                      label: Text(nodeLabels[index]), // Fix: Wrap in Text()
+                      onSelected: (bool selected) {
+                        // Handle filter selection
+                      },
+                    );
+                  }),
+                ),
+              if (edgeLabels.isNotEmpty)
+                Text(
+                  "Relationships",
+                  maxLines: 1,
+                  style: TextStyle(fontSize: 18),
+                  textAlign: TextAlign.left,
+                ),
+              Wrap(
+                alignment: WrapAlignment.start,
+                spacing: 8,
+                children: List.generate(edgeLabels.length, (int index) {
+                  return FilterChip(
+                    backgroundColor: colors[edgeLabels[index]],
+                    label: Text(edgeLabels[index]), // Fix: Wrap in Text()
+                    onSelected: (bool selected) {
+                      // Handle filter selection
+                    },
+                  );
+                }),
+              )
+            ],
+          );
+        })
       ],
     );
   }

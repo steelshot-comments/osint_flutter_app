@@ -3,6 +3,7 @@ import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_markdown/flutter_markdown.dart';
 
 class PoliciesPage extends StatefulWidget {
+  const PoliciesPage({super.key});
   @override
   _PoliciesPageState createState() => _PoliciesPageState();
 }

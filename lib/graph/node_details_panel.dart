@@ -1,11 +1,11 @@
 part of 'graph_view.dart';
 
 class NodeDetailsPanel extends StatefulWidget {
-  final Map<String, dynamic> node;
+  final Map<String, dynamic> nodeDetails;
   final VoidCallback onClose;
 
-  const NodeDetailsPanel({required this.node, required this.onClose, Key? key})
-      : super(key: key);
+  const NodeDetailsPanel(
+      {super.key, required this.nodeDetails, required this.onClose});
 
   @override
   _NodeDetailsPanelState createState() => _NodeDetailsPanelState();
@@ -13,6 +13,12 @@ class NodeDetailsPanel extends StatefulWidget {
 
 class _NodeDetailsPanelState extends State<NodeDetailsPanel> {
   bool isMinimized = false;
+
+  void _deleteNode()async{
+    await Dio().delete(
+      "http://192.168.0.114:5500/delete-node/${widget.nodeDetails["id"]}",
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -24,7 +30,6 @@ class _NodeDetailsPanelState extends State<NodeDetailsPanel> {
         mainAxisSize: MainAxisSize.min, // Prevents unnecessary space
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header Row (Always Visible)
           Row(
             children: [
               Text(
@@ -64,38 +69,25 @@ class _NodeDetailsPanelState extends State<NodeDetailsPanel> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text("ID: ${widget.node['id']}"),
-                    Text("Label: ${widget.node['label']}"),
-                    // Text("Type: ${widget.node['type']}"),
+                    Text("ID: ${widget.nodeDetails['id']}"),
+                    Text("Label: ${widget.nodeDetails['label']}"),
                     SizedBox(height: 8),
                     Text("Properties:",
                         style: TextStyle(fontWeight: FontWeight.bold)),
-                    ...widget.node['properties'].entries.map(
+                    ...widget.nodeDetails['properties'].entries.map(
                       (e) => Text("${e.key}: ${e.value}"),
                     ),
                     Divider(),
                     Text("Available Transforms:",
                         style: TextStyle(
                             fontSize: 16, fontWeight: FontWeight.bold)),
-                    Wrap(
-                      spacing: 8,
-                      children: widget.node['transforms']
-                          .map<Widget>((transform) => Column(
-                                children: [
-                                  TransformButton(
-                                    nodeId: widget.node['id'],
-                                    text: transform,
-                                  ),
-                                  SizedBox(
-                                      height:
-                                          8), // Space between button and status
-                                  TransformStatusWidget(
-                                    nodeId: widget.node['id'],
-                                  ),
-                                ],
-                              ))
-                          .toList(),
+                    TransformButton(
+                      text: "transform",
+                      nodeID: widget.nodeDetails["id"],
+                      source: "sherlock",
+                      query: "yeshayaav@gmail.com",
                     ),
+                    SquircleButton(onTap: _deleteNode, title: "Delete",background: Colors.red,)
                   ],
                 ),
               ),

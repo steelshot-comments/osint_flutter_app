@@ -1,7 +1,8 @@
 import 'dart:convert';
 
+import 'package:dio/dio.dart';
+import 'package:final_project/components/button.dart';
 import 'package:final_project/components/transform_button.dart';
-import 'package:final_project/components/transform_status.dart';
 import 'package:final_project/graph/tools.dart';
 import 'package:final_project/providers/api_provider.dart';
 import 'package:flutter/material.dart';
@@ -28,12 +29,18 @@ class _GraphViewState extends State<GraphView> {
   Map<String, dynamic>? selectedNode; // Holds the currently selected node
   bool isMapMode = false;
   bool isTableView = false;
+  bool isModeSelection = false;
   bool filterPanelVisible = false;
 
   void _fetchGraphData(BuildContext context) async {
     try {
       final response =
-          await http.get(Uri.parse('http://192.168.0.114:5500/graph'));
+          await http.post(Uri.parse('http://192.168.0.114:5500/graph'),
+              headers: {"Content-Type": "application/json"},
+              body: jsonEncode({
+                "user_id": "1",
+                "tab_id": "1",
+              }));
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> data = json.decode(response.body);
@@ -50,13 +57,13 @@ class _GraphViewState extends State<GraphView> {
               .map((e) => Map<String, dynamic>.from(e))
               .toList();
           graphProvider.setGraphData(nodes, edges);
+          graphProvider.setLabels(nodes, edges);
 
           // Convert JSON to a string, escaping special characters
           final jsonData = jsonEncode(graphProvider.toJson())
               .replaceAll("'", r"\'")
               .replaceAll('"', r'\"');
-
-          // Ensure the function is called correctly in JavaScript
+              
           _controller.runJavaScript("window.updateGraphData(\"$jsonData\")");
         } else {
           print("Invalid response structure: Missing 'nodes' or 'edges'");
@@ -103,10 +110,18 @@ class _GraphViewState extends State<GraphView> {
     });
   }
 
+  void _toggleSelectMode() {
+    setState(() {
+      isModeSelection = !isModeSelection;
+    });
+    _controller.runJavaScript(isModeSelection
+        ? "window.cy.boxSelectionEnabled(true)"
+        : "window.cy.boxSelectionEnabled(false)");
+  }
+
   @override
   void initState() {
     super.initState();
-    Future.microtask(() => context.read<ApiProvider>().loadEntities());
 
     _controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
@@ -126,8 +141,6 @@ class _GraphViewState extends State<GraphView> {
       )
       ..loadFlutterAsset('assets/web/graph.html');
 
-    // add webview options to reduce memory usage
-
     _controller.setNavigationDelegate(
       NavigationDelegate(
         onPageFinished: (url) {
@@ -137,16 +150,8 @@ class _GraphViewState extends State<GraphView> {
     );
   }
 
-  void _addNode() {
-    // create json object
-    // JSON
-    
-    // _controller.runJavaScript("window.receiveData($newNode)");
-  }
-
   @override
   Widget build(BuildContext context) {
-    var apiProvider = context.watch<ApiProvider>();
     return Scaffold(
       appBar: isMapMode
           ? null
@@ -168,25 +173,24 @@ class _GraphViewState extends State<GraphView> {
                       ? TableView()
                       : WebViewWidget(controller: _controller),
                 ),
-                // Show NodeDetailsPanel only when a node is selected
                 if (selectedNode != null)
                   Positioned(
-                    bottom: 50,
+                    bottom: 0,
                     left: 0,
                     right: 0,
                     child: NodeDetailsPanel(
-                      node: selectedNode!,
-                      onClose: closeNodeDetails, // Pass the close function
+                      nodeDetails: selectedNode!,
+                      onClose: closeNodeDetails,
                     ),
                   ),
               ],
             ),
           ),
+          Visibility(
+            visible: filterPanelVisible,
+            child: FilterPanel(),
+          ),
           Column(children: [
-            Visibility(
-              visible: filterPanelVisible,
-              child: FilterPanel(),
-            ),
             Tools(
               tools: [
                 ToolItem(
@@ -226,17 +230,40 @@ class _GraphViewState extends State<GraphView> {
                   onPressed: _toggleMapMode,
                   tooltip: "Zen Mode",
                 ),
+                ToolItem(
+                  icon: Icons.select_all,
+                  onPressed: _toggleSelectMode,
+                  tooltip: isModeSelection ? "Panning mode" : "Selection mode",
+                ),
+                ToolItem(
+                  icon: Icons.refresh,
+                  onPressed: _controller.reload,
+                  tooltip: "Refresh graph",
+                ),
+                ToolItem(
+                  icon: Icons.add,
+                  onPressed: () => Navigator.of(context).pushNamed("/addNode"),
+                  tooltip: "Add node",
+                ),
+                ToolItem(
+                  icon: Icons.arrow_circle_right_outlined,
+                  onPressed: () {},
+                  tooltip: "Create edges",
+                ),
+                ToolItem(
+                  icon: Icons.undo,
+                  onPressed: () {},
+                  tooltip: "Undo",
+                ),
+                ToolItem(
+                  icon: Icons.redo,
+                  onPressed: () {},
+                  tooltip: "Redo",
+                ),
               ],
             ),
           ]),
         ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: (){
-          Navigator.of(context).pushNamed("/addNode");
-        },
-        // _controller.reload,
-        child: Icon(Icons.add),
       ),
     );
   }

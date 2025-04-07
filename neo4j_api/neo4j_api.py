@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from neo4j import GraphDatabase
 from dotenv import load_dotenv
+from typing import List
 
 # Load environment variables
 load_dotenv()
@@ -30,8 +31,8 @@ app.add_middleware(
 
 # Models for requests
 class NodeCreateRequest(BaseModel):
-    type: str
-    properties: dict
+    labels: list[str]
+    properties: dict[str, str]
 
 class RelationshipCreateRequest(BaseModel):
     from_node: int
@@ -45,18 +46,51 @@ class NodeUpdateRequest(BaseModel):
 class NodeDeleteRequest(BaseModel):
     id: int
 
+class GraphRequest(BaseModel):
+    user_id: str
+    tab_id: str
+
 # Utility function to run Cypher queries
 async def run_query(query: str, parameters: dict = {}):
     with driver.session(database=NEO4J_DB) as session:
         result = session.run(query, parameters)
-        return list(result)  # Fetch all records before session closes
+        return list(result) # Fetch all records before session closes
+    
+app.get("/")
+def root():
+    return {
+        "message": "Welcome to the neo4j api for OSINT app",
+        "routes": {
+            "/add-records": "Run an OSINT task with the specified source and query.",
+            "/graph": "Get the result of a task by its ID.",
+            "/delete-records": "Fetch all results from the database.",
+        }
+    }
 
 # Route to add a node
-@app.post("/add-record")
-async def add_node(request: NodeCreateRequest):
-    query = f"CREATE (n:{request.type} $properties) RETURN n"
-    result = await run_query(query, {"properties": request.properties})
-    records = result.data()
+@app.post("/add-record/{user_id}/{tab_id}/{source_node_id}")
+async def add_node(user_id: int, tab_id: int, source_node_id: str,request: List[NodeCreateRequest]):
+    query = """
+    UNWIND $nodes AS node
+    CREATE (n)
+    SET n = node.properties
+    SET n.user_id = $user_id, n.tab_id = $tab_id
+    WITH n, node
+    CALL apoc.create.addLabels(n, node.labels) YIELD node as updatedNode
+    RETURN n
+    """
+    
+    # print(request)
+
+    # Convert request to a list of dictionaries with labels and properties
+    nodes_data = [{"labels": node.labels, "properties": node.properties} for node in request]
+
+    result = await run_query(query, {
+        "nodes":nodes_data,
+        "user_id": user_id,
+        "tab_id": tab_id
+    })
+    records = result
     if not records:
         raise HTTPException(status_code=500, detail="Failed to add node")
     return {"message": "Node added successfully", "node": records[0]["n"]}
@@ -70,10 +104,16 @@ async def view_nodes():
     return {"nodes": nodes}
 
 # Route to get the full graph (nodes + relationships)
-@app.get("/graph")
-async def get_graph():
-    query = "MATCH (n) OPTIONAL MATCH (n)-[r]->(m) RETURN n, r, m"
-    result = await run_query(query)
+@app.post("/graph")
+async def get_graph(request: GraphRequest):
+    query = """
+    MATCH (n)
+    WHERE n.user_id = $user_id AND n.tab_id = $tab_id
+    OPTIONAL MATCH (n)-[r]->(m)
+    WHERE m.user_id = $user_id AND m.tab_id = $tab_id
+    RETURN n, r, m
+    """
+    result = await run_query(query, {"user_id": int(request.user_id), "tab_id": int(request.tab_id)})
 
     nodes = []
     edges = []
@@ -82,7 +122,7 @@ async def get_graph():
         if record["n"]:
             nodes.append({
                 "id": str(record["n"].id),
-                "label": record["n"].labels,
+                "labels": record["n"].labels,
                 "properties": record["n"]._properties
             })
         r = record["r"]
@@ -95,7 +135,7 @@ async def get_graph():
                     "target": str(r.nodes[1].id),
                     "label": r.type
                 })
-
+    
     return {"nodes": nodes, "edges": edges}
 
 # Route to add a relationship
@@ -129,10 +169,12 @@ async def update_node(request: NodeUpdateRequest):
     return {"message": "Node updated successfully", "node": records[0]["n"]}
 
 # Route to delete a node
-@app.delete("/delete-node")
-async def delete_node(request: NodeDeleteRequest):
-    query = "MATCH (n) WHERE id(n)=$id DETACH DELETE n"
-    await run_query(query, {"id": request.id})
+@app.delete("/delete-node/{node_id}")
+async def delete_node(node_id: str):
+    print(node_id)
+    query = "MATCH (n) WHERE ID(n)=$id DETACH DELETE n"
+    # AND n.user_id = $user_id AND n.tab_id = $tab_id
+    await run_query(query, {"id": node_id})
     return {"message": "Node deleted successfully"}
 
 # Run the FastAPI server

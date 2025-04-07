@@ -1,4 +1,4 @@
-part of 'login.dart';
+part of 'auth_screen.dart';
 
 String generateOtp(String secret) {
   return OTP.generateTOTPCodeString(

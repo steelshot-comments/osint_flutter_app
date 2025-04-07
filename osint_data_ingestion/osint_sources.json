@@ -27,7 +27,6 @@
       "name": "sherlock",
       "type": "CLI",
       "command": "sherlock {query}",
-      "output_format": "json",
       "rate_limit": 3
     },
     {

@@ -1,16 +1,18 @@
 import json
 import sqlite3
-import redis
 import requests
 import subprocess
 from celery import Celery
-from subprocess import run, PIPE
+from subprocess import PIPE
 from neo4j import GraphDatabase
-# env file
 import os
 from dotenv import load_dotenv
-load_dotenv()
+from redis_config import redis_client
+import re
+import requests
+
 # Load environment variables
+load_dotenv()
 NEO4J_URI = os.getenv("NEO4J_URI")
 NEO4J_USER = os.getenv("NEO4J_USER")
 NEO4J_PASSWORD = os.getenv("NEO4J_PASSWORD")
@@ -22,8 +24,37 @@ celery.conf.update(
     result_backend="redis://localhost:6379/0"
 )
 
-# Connect to Redis
-redis_client = redis.Redis(host="localhost", port=6379, db=0)
+def post_to_neo4j(node_id, nodes):
+    url = f"http://192.168.0.114:5500/add-record/${node_id}"  # Replace with your actual Neo4j API endpoint
+
+    try:
+        response = requests.post(url, json=nodes)
+        return response.json()
+    except requests.RequestException as e:
+        return {"error": str(e)}
+
+# def map_sherlock_result_to_nodes(result):
+#     nodes = []
+#     for platform, url in result.items():
+#         node = {
+#             "labels": ["SocialMediaAccount"],
+#             "properties": {
+#                 "platform": platform,
+#                 "url": url
+#             }
+#         }
+#         nodes.append(node)
+#     print(nodes)
+#     return nodes
+
+# Function to publish transform updates to redis queue
+def publish_transform_update(node_id: str, status: str, data: dict = None):
+    message = {
+        "node_id": node_id,
+        "status": status,
+        "data": data or {}
+    }
+    redis_client.publish("transform_updates", json.dumps(message))
 
 # Load OSINT sources from config file
 def load_sources(config_file="osint_sources.json"):
@@ -69,34 +100,68 @@ def fetch_api_data(source, query):
     except Exception as e:
         return {"error": str(e)}
 
+def parse_sherlock_style_output(output):
+    nodes = []
+    lines = output.splitlines()
+    for line in lines:
+        match = re.match(r"\[\+\] (.*?): (.+)", line)
+        if match:
+            site, url = match.groups()
+            node = {
+                "labels": [site.strip()],
+                "properties": {
+                    "url": url.strip()
+                }
+            }
+            nodes.append(node)
+    
+    if nodes:
+        return nodes
+    
+    # Fallback if pattern doesn't match
+    return [{
+        "labels": ["RawOutput"],
+        "properties": {
+            "output": output.strip()
+        }
+    }]
+
+
 # Celery Task: Run CLI Tool or API
 @celery.task
-def run_tool(source_name, query):
-    sources = load_sources()  # Load sources
+def run_tool(source_name, query, node_id):
+    sources = load_sources()  # Load sources from json file
 
     source = next((s for s in sources if s["name"] == source_name), None)
     if not source:
         return {"error": "Source not found"}
     
+    publish_transform_update(node_id, "PENDING", data={"message": "Source found"})
+    
     if source["type"] == "API":
-        result = fetch_api_data(source, query)  # API-based OSINT
+        result = fetch_api_data(source, query)
     else:
-        command = source["command"].format(query=query)
-        result = subprocess.run(command, shell=True, stdout=PIPE, stderr=PIPE, text=True)
-        if result.returncode == 0:
-            output = result.stdout.strip()
-            if output:
+        command = source["command"].format(query=query) # json has command with {query} placeholder
+        result = {}
+        try:
+            proc = subprocess.run(command, shell=True, stdout=PIPE, stderr=PIPE, text=True)
+            if proc.returncode == 0:
+                output = proc.stdout.strip()
+                publish_transform_update(node_id, "PENDING", data={"message":"Recieved result of command"})
+                # Try to parse JSON output
                 try:
-                    result = json.loads(output) #if source["output_format"] == "json" else {"raw_output": output}
+                    result = json.loads(output)
                 except json.JSONDecodeError:
-                    result = {"error": "Invalid JSON output", "raw_output": output}
+                    result = parse_sherlock_style_output(output)
             else:
-                result = {"error": "Empty output from command"}
-        else:
-            result = {"error": result.stderr.strip()}
+                result = {"error": proc.stderr.strip()}
+        except Exception as e:
+            result = {"error": str(e)}
 
-    save_result(source_name, query, result)  # Save result
-    print(result)
+    publish_transform_update(node_id, "completed", data={"message":"DONEEEE"})
+
+    save_result(source_name, query, result)  # Save result in sqlite database
+    post_to_neo4j(node_id,result) # store in neo4j
     return result
 
 def store_scan_results(scan_results):

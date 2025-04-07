@@ -15,7 +15,7 @@
         }
 
         window.updateGraphData = function (data) {
-            console.log(data);
+            // console.log(data);
             const parsedData = JSON.parse(data);
 
             const elements = [];
@@ -24,7 +24,7 @@
                 elements.push({
                     data: {
                         id: node.id,
-                        label: node.label[0] || "Unnamed Node",
+                        label: node.labels[0] || "Unnamed Node",
                         properties: node.properties && typeof node.properties === 'object'
                             ? { ...node.properties }
                             : {}
@@ -87,6 +87,7 @@
             ],
             layout: { name: 'cose' }
         });
+        window.cy = cy;
 
         cy.on('tap', 'node', function (event) {
             var node = event.target;
@@ -94,7 +95,6 @@
                 id: node.id(),
                 label: node.data('label') || {},
                 properties: node.data('properties') || {},
-                transforms: getAvailableTransforms(node.data('label')) || {}
             };
             if (window.FlutterGraphChannel) {
                 window.FlutterGraphChannel.postMessage(JSON.stringify(nodeData));
@@ -142,18 +142,6 @@
         //     console.log('tap on background');
         //     addNode('13', 'New Node');
         // });
-
-        function getAvailableTransforms(type) {
-            var transforms = {
-                'Person': ['Find Social Media', 'Lookup Address', 'Check Criminal Records'],
-                'phone_number': ['Reverse Lookup', 'Find Carrier', 'Geolocation'],
-                'Location': ['Nearby Crimes', 'Check Businesses'],
-                'social_media': ['Find Linked Accounts', 'Check Activity'],
-                'transaction': ['Trace Source', 'Check Fraud']
-            };
-            return transforms[type] || [];
-        }
-
 
         // Function to update node label dynamically
         function updateNodeLabel(node) {

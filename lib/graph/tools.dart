@@ -14,9 +14,10 @@ class _ToolsState extends State<Tools> {
   Widget build(BuildContext context) {
     return Container(
       color: Theme.of(context).colorScheme.surface,
-      height: 50,
-      child: ListView(
-        scrollDirection: Axis.horizontal,
+      child: GridView.count(
+        crossAxisCount: 8, // 8 icons per row
+        shrinkWrap: true, // Ensures the GridView takes only the space it needs
+        physics: NeverScrollableScrollPhysics(), // Prevents internal scrolling
         children: List.generate(widget.tools.length, (index) {
           return IconButton(
             icon: Icon(widget.tools[index].icon),
@@ -34,5 +35,6 @@ class ToolItem {
   final VoidCallback onPressed;
   final String tooltip;
 
-  ToolItem({required this.icon, required this.onPressed, required this.tooltip});
+  ToolItem(
+      {required this.icon, required this.onPressed, required this.tooltip});
 }

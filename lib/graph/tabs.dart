@@ -40,7 +40,7 @@ class _TabsState extends State<Tabs> with TickerProviderStateMixin {
   }
 
   void _loadDataForTab(int index) {
-    String dataUrl = "/assets/web/graph.html"; // Replace with real URLs
+    // String dataUrl = "/assets/web/graph.html"; // Replace with real URLs
     // _controller.loadRequest(Uri.parse(dataUrl));
   }
 
