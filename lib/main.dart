@@ -9,24 +9,29 @@ import 'package:final_project/settings_page.dart';
 import 'package:final_project/transforms_timeline.dart';
 import 'package:flutter/material.dart';
 import 'package:final_project/auth/auth_screen.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:flutter/services.dart';
+// import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:provider/provider.dart';
 // import 'package:webview_flutter/webview_flutter.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized(); // Ensures Flutter is ready
-  final FlutterSecureStorage secureStorage = FlutterSecureStorage();
-  String? accessToken = await secureStorage.read(key: "access_token");
-  String? refreshToken = await secureStorage.read(key: "refresh_token");
+  // SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
+  //   systemNavigationBarColor: Colors.transparent, // your theme color here
+  //   systemNavigationBarIconBrightness: Brightness.light, // or Brightness.dark
+  // ));
+  // final FlutterSecureStorage secureStorage = FlutterSecureStorage();
+  // String? accessToken = await secureStorage.read(key: "access_token");
+  // String? refreshToken = await secureStorage.read(key: "refresh_token");
 
-  if (accessToken != null) {
-    debugPrint("Access token found!");
-  } else {
+  // if (accessToken != null) {
+  //   debugPrint("Access token found!");
+  // } else {
     // Refresh token if needed
-    final newToken = await refreshAccessToken();
-    accessToken =
-        newToken ?? accessToken; // Use the refreshed token if available
-  }
+    // final newToken = await refreshAccessToken();
+    // accessToken =
+        // newToken ?? accessToken; // Use the refreshed token if available
+  // }
 
   // if (WebView.platform == null) {
   //   WebView.platform = SurfaceAndroidWebView();
@@ -39,7 +44,7 @@ void main() async {
       ChangeNotifierProvider(create: (_) => ThemeProvider()),
     ],
     child: MainApp(
-      isLoggedIn: accessToken != null || refreshToken != null
+      isLoggedIn: true//accessToken != null || refreshToken != null
       ),
   ));
 }
@@ -87,7 +92,7 @@ class MainApp extends StatelessWidget {
             brightness: Brightness.dark, // Ensures dark mode appearance
           ),
           navigationBarTheme: NavigationBarThemeData(
-            backgroundColor: Color.fromRGBO(18, 18, 18, 1), // Dark background
+            backgroundColor: Color(0xFF1E1E1E), // Dark background
             indicatorShape: const RoundedRectangleBorder(
               borderRadius: BorderRadius.all(Radius.circular(10)),
             ),

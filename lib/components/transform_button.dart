@@ -23,9 +23,22 @@ class TransformButton extends StatefulWidget {
 class _TransformButtonState extends State<TransformButton> {
   bool _isLoading = false;
   WebSocketChannel? _channel;
+  String _wsMessage = ''; // Store latest WebSocket message
+
+  List<String> nodeTypes = [
+    "email",
+    "domain",
+    "person",
+    "phone",
+    "ip",
+  ];
 
   void startTransform() async {
-    setState(() => _isLoading = true);
+    setState(() {
+      _isLoading = true;
+      _wsMessage = ''; // Clear message on new transform start
+    });
+
     debugPrint("DEBUG: Sending transform request for node");
 
     try {
@@ -50,17 +63,32 @@ class _TransformButtonState extends State<TransformButton> {
       _channel!.stream.listen(
         (message) {
           debugPrint("DEBUG: WebSocket message: $message");
-          setState(() => _isLoading = false);
+          setState(() {
+            _isLoading = false;
+            _wsMessage = message; // Update message display
+          });
           _channel?.sink.close();
         },
         onError: (error) {
           debugPrint("WebSocket error: $error");
-          setState(() => _isLoading = false);
+          setState(() {
+            _isLoading = false;
+            _wsMessage = ''; // Clear on error
+          });
+        },
+        onDone: () {
+          debugPrint("WebSocket closed.");
+          setState(() {
+            _wsMessage = ''; // Clear message when closed
+          });
         },
       );
     } catch (e) {
       debugPrint("Error starting transform: $e");
-      setState(() => _isLoading = false);
+      setState(() {
+        _isLoading = false;
+        _wsMessage = '';
+      });
     }
   }
 
@@ -72,9 +100,19 @@ class _TransformButtonState extends State<TransformButton> {
 
   @override
   Widget build(BuildContext context) {
-    return ElevatedButton(
-      onPressed: _isLoading ? null : startTransform,
-      child: Text(widget.text),
-    );
+    return Row(children: [
+      ElevatedButton(
+        onPressed: _isLoading ? null : startTransform,
+        child: Text(widget.text),
+      ),
+      const SizedBox(width: 12),
+      Expanded( // So the message text doesn't overflow
+        child: Text(
+          _wsMessage,
+          style: const TextStyle(fontSize: 14),
+          overflow: TextOverflow.ellipsis,
+        ),
+      ),
+    ]);
   }
 }

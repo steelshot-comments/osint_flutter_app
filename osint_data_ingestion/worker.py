@@ -24,14 +24,34 @@ celery.conf.update(
     result_backend="redis://localhost:6379/0"
 )
 
-def post_to_neo4j(node_id, nodes):
-    url = f"http://192.168.0.114:5500/add-record/${node_id}"  # Replace with your actual Neo4j API endpoint
+def post_to_neo4j(node_id: str, nodes):
+    url = f"http://192.168.0.114:5500/add-record/1/1/${node_id}"
 
     try:
-        response = requests.post(url, json=nodes)
-        return response.json()
+        nodes = requests.post(url, json=nodes)
+        data = nodes.json()
+        nodes = data["nodes"]
+        relationships = [
+            {
+                "from_id": int(node_id),  # Parent node
+                "to_id": int(node[0]),      # New node's internal ID
+            }
+            for node in data["nodes"]
+        ]
+        request_data = {
+            "pairs": relationships,
+            "relationship": "has account"
+        }
+
+        try:
+            response = requests.post(f"http://192.168.0.114:5500/add-relationship", json=request_data)
+            response.raise_for_status()
+        except requests.RequestException as e:
+            return {"error adding relationships": str(e)}
+        
+        return nodes
     except requests.RequestException as e:
-        return {"error": str(e)}
+        return {"error adding nodes": str(e)}
 
 # def map_sherlock_result_to_nodes(result):
 #     nodes = []
@@ -129,7 +149,8 @@ def parse_sherlock_style_output(output):
 
 # Celery Task: Run CLI Tool or API
 @celery.task
-def run_tool(source_name, query, node_id):
+def run_tool(source_name, query, node_id: str):
+    print(node_id)
     sources = load_sources()  # Load sources from json file
 
     source = next((s for s in sources if s["name"] == source_name), None)

@@ -20,7 +20,7 @@ class _TimelinesPageState extends State<TimelinesPage> {
 
   Future<void> fetchTimelines() async {
     try {
-      var response = await Dio().get('http://192.168.0.114:8000/results');
+      var response = await Dio().get('http://192.168.0.114:8000/task-results');
       setState(() {
         timelineData = response.data;
         isLoading = false;
@@ -35,9 +35,15 @@ class _TimelinesPageState extends State<TimelinesPage> {
 
   Future<void> deleteTransform(String id) async {
     try {
-      await Dio().delete('http://localhost/results/$id');
+      await Dio().delete('http://192.168.0.114:8000/delete-task-result/$id');
       setState(() {
-        timelineData.removeWhere((item) => item['id'] == id);
+        // print(timelineData.length);
+        timelineData.removeWhere((item){
+          print(item['id']);
+          print(id);
+          return item['id'] == id;
+          });
+        // print(timelineData.length);
       });
     } catch (e) {
       print('Error deleting transform: $e');
@@ -47,10 +53,11 @@ class _TimelinesPageState extends State<TimelinesPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Timelines')),
+      appBar: AppBar(title: Text('History of actions'), automaticallyImplyLeading: false,),
       body: isLoading
           ? Center(child: CircularProgressIndicator())
-          : ListView.builder(
+          : timelineData.length != 0 ?    
+          ListView.builder(
               itemCount: timelineData.length,
               itemBuilder: (context, index) {
                 var item = timelineData[index];
@@ -68,12 +75,13 @@ class _TimelinesPageState extends State<TimelinesPage> {
                     ),
                     trailing: IconButton(
                       icon: Icon(Icons.delete, color: Colors.red),
-                      onPressed: () => deleteTransform(item['id']),
+                      onPressed: () => deleteTransform(item['id'].toString()),
                     ),
                   ),
                 );
               },
-            ),
+            )
+          : Center(child: Text("No results in timeline"))
     );
   }
 }

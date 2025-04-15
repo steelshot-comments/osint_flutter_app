@@ -14,20 +14,27 @@ class NodeDetailsPanel extends StatefulWidget {
 class _NodeDetailsPanelState extends State<NodeDetailsPanel> {
   bool isMinimized = false;
 
-  void _deleteNode()async{
+  void _deleteNode() async {
     await Dio().delete(
       "http://192.168.0.114:5500/delete-node/${widget.nodeDetails["id"]}",
     );
+    // remove node from graph
+    context.read<GraphProvider>().removeNodes([widget.nodeDetails["id"]]);
+    widget.onClose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final label = widget.nodeDetails['label'];
+    final actionMap = context.watch<GraphProvider>().getActionsForLabel(label);
+    // print("-------------------------- $actionMap -----------------------");
+
     return Container(
       // Color based on theme
       color: Theme.of(context).scaffoldBackgroundColor,
       padding: EdgeInsets.fromLTRB(20, 10, 20, 10),
       child: Column(
-        mainAxisSize: MainAxisSize.min, // Prevents unnecessary space
+        mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
@@ -70,7 +77,7 @@ class _NodeDetailsPanelState extends State<NodeDetailsPanel> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text("ID: ${widget.nodeDetails['id']}"),
-                    Text("Label: ${widget.nodeDetails['label']}"),
+                    Text("Label: $label"),
                     SizedBox(height: 8),
                     Text("Properties:",
                         style: TextStyle(fontWeight: FontWeight.bold)),
@@ -78,16 +85,32 @@ class _NodeDetailsPanelState extends State<NodeDetailsPanel> {
                       (e) => Text("${e.key}: ${e.value}"),
                     ),
                     Divider(),
-                    Text("Available Transforms:",
-                        style: TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.bold)),
-                    TransformButton(
-                      text: "transform",
-                      nodeID: widget.nodeDetails["id"],
-                      source: "sherlock",
-                      query: "yeshayaav@gmail.com",
-                    ),
-                    SquircleButton(onTap: _deleteNode, title: "Delete",background: Colors.red,)
+                    ...[
+                      if (actionMap != null) ...[
+                        Text(
+                          "Available Transforms:",
+                          style: TextStyle(
+                              fontSize: 16, fontWeight: FontWeight.bold),
+                        ),
+                        ...actionMap.map((action) {
+                          final queryValue = widget.nodeDetails['properties']
+                              [action["queryField"]];
+                          return TransformButton(
+                            text: action["label"]!,
+                            nodeID: widget.nodeDetails["id"],
+                            source: action["tool"]!,
+                            query: queryValue,
+                          );
+                        })
+                      ]
+                      else
+                        Text("No actions available for this node."),
+                    ],
+                    SquircleButton(
+                      onTap: _deleteNode,
+                      title: "Delete",
+                      background: Colors.red,
+                    )
                   ],
                 ),
               ),

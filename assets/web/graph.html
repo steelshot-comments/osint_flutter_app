@@ -77,13 +77,21 @@
                     selector: 'edge',
                     style: {
                         'width': 2,
-                        'label': 'data(type)',
+                        'label': 'data(label)',
                         'line-color': '#ccc',
                         'target-arrow-shape': 'triangle',
                         'target-arrow-color': '#ccc',
                         'curve-style': 'bezier'
                     }
+                },
+                {
+                    selector: '.highlighted',
+                    style: {
+                        'border-color': '#f00',
+                        'border-width': 3
+                    }
                 }
+
             ],
             layout: { name: 'cose' }
         });
@@ -103,45 +111,6 @@
                 alert("no flutter :(");
             }
         });
-
-        // cy.on('dragfree', 'node', function (event) {
-        //     let node = event.target;
-        //     cy.layout({
-        //         name: 'cola',
-        //         animate: true,
-        //         fit: false, // Prevents zooming in
-        //     }).run();
-        // });
-
-        // cy.on('drag', 'node', function (event) {
-        //     let draggedNode = event.target;
-        //     let nodePosition = draggedNode.position();
-
-        //     cy.nodes().not(draggedNode).forEach(function (otherNode) {
-        //         let otherPos = otherNode.position();
-
-        //         let dx = otherPos.x - nodePosition.x;
-        //         let dy = otherPos.y - nodePosition.y;
-        //         let distance = Math.sqrt(dx * dx + dy * dy);
-
-        //         if (distance < 150) { // If too close, push away
-        //             let angle = Math.atan2(dy, dx);
-        //             let moveX = Math.cos(angle) * 30; // Adjust push strength
-        //             let moveY = Math.sin(angle) * 30;
-
-        //             otherNode.position({
-        //                 x: otherPos.x + moveX,
-        //                 y: otherPos.y + moveY
-        //             });
-        //         }
-        //     });
-        // });
-
-
-        // cy.on('tap', function (event) {
-        //     console.log('tap on background');
-        //     addNode('13', 'New Node');
-        // });
 
         // Function to update node label dynamically
         function updateNodeLabel(node) {
@@ -188,21 +157,31 @@
         }
 
         window.searchGraph = function (query, filter) {
-            let nodes
-            if (query.length) {
-                nodes = cy.nodes().filter(node => node.data('label').includes(query) ||
-                    node.data('properties') && Object.values(node.data('properties')).some(value => value.includes(query)));
-            }
-            // check if filter is not empty
-            // filter can be display relationships, nodes, type of node or relationship
+            let nodes;
+
+            // Normalize inputs
+            const q = query.toLowerCase();
+            const filterList = Array.isArray(filter) ? filter.map(f => f.toLowerCase()) : [];
+
+            nodes = cy.nodes().filter(node => {
+                const label = (node.data('label') || "").toLowerCase();
+                const matchesQuery = query.length === 0 || label.includes(query.toLowerCase()) ||
+                    (node.data('properties') &&
+                        Object.values(node.data('properties')).some(value =>
+                            String(value).toLowerCase().includes(query.toLowerCase())
+                        ));
+
+                const matchesFilter = filter.length === 0 || filter.map(f => f.toLowerCase()).includes(label);
+
+                return matchesQuery && matchesFilter;
+            });
+            // console.log(`nodes ------------> ${JSON.stringify(nodes.map(n => n.data()))}`);
+
             cy.elements().removeClass('highlighted');
             nodes.addClass('highlighted');
-            cy.fit(nodes, 50);
-        }
 
-        function filter() {
-
-        }
+            // cy.fit(nodes, 50);
+        };
     </script>
 </body>
 

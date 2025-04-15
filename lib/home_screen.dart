@@ -1,6 +1,7 @@
 import 'package:final_project/graph/graph_view.dart';
 // import 'package:final_project/map/map.dart';
 import 'package:final_project/settings_page.dart';
+import 'package:final_project/transforms_timeline.dart';
 // import 'package:final_project/view_data.dart';
 import 'package:flutter/material.dart';
 // import 'add_record.dart';
@@ -45,6 +46,10 @@ class _HomeScreenState extends State<HomeScreen> {
         destinations: const [
           NavigationDestination(icon: Icon(Icons.home_outlined), label: "Home"),
           NavigationDestination(
+            icon: Icon(Icons.history),
+            label: "Timeline",
+          ),
+          NavigationDestination(
             icon: Icon(Icons.settings),
             label: "Settings",
           ),
@@ -52,6 +57,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       body: <Widget>[
         GraphView(),
+        TimelinesPage(),
         SettingsPage()
       ][currentPageIndex],
     );
