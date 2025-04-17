@@ -6,10 +6,8 @@ import 'package:final_project/components/transform_button.dart';
 import 'package:final_project/custom_webview.dart';
 import 'package:final_project/graph/tools.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:provider/provider.dart';
-import 'package:http/http.dart' as http;
 import './filters.dart';
 import 'package:flutter/services.dart';
 import './graph_provider.dart';
@@ -18,16 +16,16 @@ part 'tabs.dart';
 part 'menubar.dart';
 part 'tableView.dart';
 
-final dio = Dio();
+// final dio = Dio();
 
-class GraphView extends StatefulWidget {
-  const GraphView({super.key});
+class InvestigationPage extends StatefulWidget {
+  const InvestigationPage({super.key});
 
   @override
-  _GraphViewState createState() => _GraphViewState();
+  _InvestigationPageState createState() => _InvestigationPageState();
 }
 
-class _GraphViewState extends State<GraphView> {
+class _InvestigationPageState extends State<InvestigationPage> {
   late final WebViewController _controller = WebViewController();
   Map<String, dynamic>? selectedNode; // Holds the currently selected node
   bool isMapMode = false;
@@ -36,11 +34,10 @@ class _GraphViewState extends State<GraphView> {
   bool filterPanelVisible = false;
   bool isLoading = false;
   bool hasData = false;
-  bool _isControllerReady = false;
 
   Future<Response> _fetchGraphData() async {
     try {
-      final response = await dio.post('http://192.168.0.114:5500/graph',
+      final response = await Dio().post('http://192.168.0.114:5500/graph',
           options: Options(
             headers: {"Content-Type": "application/json"},
           ),
@@ -55,10 +52,11 @@ class _GraphViewState extends State<GraphView> {
     }
   }
 
-  void _displayGraphData(BuildContext context, Response response) async {
+  void _setGraphProvider(BuildContext context, Response response) async {
     final graphProvider = Provider.of<GraphProvider>(context, listen: false);
 
     if (response.statusCode == 200) {
+
       final Map<String, dynamic> data = response.data;
 
       if (data['nodes'] is List && data['edges'] is List) {
@@ -74,16 +72,11 @@ class _GraphViewState extends State<GraphView> {
         graphProvider.setLabels(nodes, edges);
         await graphProvider.fetchActionMap();
 
-        // Convert JSON to a string, escaping special characters
-        final jsonData = jsonEncode(graphProvider.toJson());
-        final escapedJson = jsonEncode(jsonData);
-
-        _controller.runJavaScript("window.updateGraphData($escapedJson)");
-        setState(() {
-          isLoading = false;
-        });
         setState(() {
           hasData = true;
+        });
+        setState(() {
+          isLoading = false;
         });
       } else {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -101,46 +94,16 @@ class _GraphViewState extends State<GraphView> {
     setState(() {
       isLoading = true;
     });
-    _initializeWebViewAndGraph();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _fetchAndSetProvider();
+    });
   }
 
-  Future<void> _initializeWebViewAndGraph() async {
-    try {
-      final response = await _fetchGraphData();
-
-      if (response.statusCode == 200) {
-        _controller
-          ..setJavaScriptMode(JavaScriptMode.unrestricted)
-          ..clearCache()
-          ..setBackgroundColor(Colors.transparent)
-          ..addJavaScriptChannel(
-            "FlutterGraphChannel",
-            onMessageReceived: (JavaScriptMessage message) {
-              Map<String, dynamic> nodeData =
-                  Map<String, dynamic>.from(jsonDecode(message.message));
-
-              setState(() {
-                selectedNode = nodeData;
-              });
-            },
-          );
-        _controller.setNavigationDelegate(
-          NavigationDelegate(
-            onPageFinished: (url) {
-              _displayGraphData(context, response);
-            },
-          ),
-        );
-        _controller.loadFlutterAsset('assets/web/graph.html');
-
-        setState(() {
-          _isControllerReady = true;
-        });
-      } else {
-        debugPrint("Failed to fetch graph data: ${response.statusCode}");
-      }
-    } catch (e) {
-      debugPrint("Error initializing web view: $e");
+  void _fetchAndSetProvider() async {
+    Response response;
+    if (!Provider.of<GraphProvider>(context, listen: false).hasFetchedOnce) {
+      response = await _fetchGraphData();
+      _setGraphProvider(context, response);
     }
   }
 
@@ -224,23 +187,22 @@ class _GraphViewState extends State<GraphView> {
           Expanded(
             child: Stack(
               children: [
-                Positioned.fill(child: Text("")
-                // Builder(builder: (context) {
-                //   if (isLoading || !_isControllerReady) {
-                //     return Center(child: CircularProgressIndicator());
-                //   } else if (hasData) {
-                //     return isTableView
-                //         ? TableView()
-                //         : CustomWebView(
-                //             assetUrl: 'assetUrl',
-                //             onMessage: () {},
-                //             onControllerReady:
-                //                 () {}); //WebViewWidget(controller: _controller);
-                //   } else {
-                //     return Center(child: Text("No data found!"));
-                //   }
-                // })
-                ),
+                Positioned.fill(child: Builder(builder: (context) {
+                  if (isLoading) {
+                    return Center(child: CircularProgressIndicator());
+                  } else if (hasData) {
+                    return isTableView
+                        ? TableView()
+                        : CustomWebView(
+                            assetUrl: 'assets/web/graph.html',
+                            // onMessage: () {},
+                            // onControllerReady:
+                            //     () {}
+                                );
+                  } else {
+                    return Center(child: Text("No data found!"));
+                  }
+                })),
                 if (selectedNode != null)
                   Positioned(
                     bottom: 0,
@@ -306,9 +268,6 @@ class _GraphViewState extends State<GraphView> {
                 icon: Icons.refresh,
                 onPressed: () async {
                   final response = await _fetchGraphData();
-                  if (response.statusCode == 200) {
-                    _displayGraphData(context, response);
-                  }
                 },
                 tooltip: "Refresh graph",
               ),

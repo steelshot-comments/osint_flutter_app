@@ -16,9 +16,11 @@ class GraphProvider extends ChangeNotifier {
     "Transcation": Colors.brown,
   };
   final Map<String, List<Map<String, String>>> _actionMap = {};
+  bool _hasFetchedOnce = false;
 
   // getters
 
+  bool get hasFetchedOnce => _hasFetchedOnce;
   List<Map<String, dynamic>> get nodes => _nodes;
   List<String> get nodeLabels => _nodeLabels;
   List<Map<String, dynamic>> get edges => _edges;

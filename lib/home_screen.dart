@@ -1,4 +1,4 @@
-import 'package:final_project/graph/graph_view.dart';
+import 'package:final_project/graph/investigation_page.dart';
 // import 'package:final_project/map/map.dart';
 import 'package:final_project/settings_page.dart';
 import 'package:final_project/transforms_timeline.dart';
@@ -56,7 +56,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
       body: <Widget>[
-        GraphView(),
+        InvestigationPage(),
         TimelinesPage(),
         SettingsPage()
       ][currentPageIndex],

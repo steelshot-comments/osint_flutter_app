@@ -15,7 +15,7 @@
         }
 
         window.updateGraphData = function (data) {
-            // console.log(data);
+            console.log(data);
             const parsedData = JSON.parse(data);
 
             const elements = [];
@@ -56,7 +56,7 @@
     <div id="cy" style="width: 100%; height: 100vh;"></div>
 
     <script>
-        // console.log("Update graph data is of type: " + typeof window.updateGraphData);
+        console.log("Update graph data is of type: " + typeof window.updateGraphData);
         const cy = cytoscape({
             container: document.getElementById('cy'),
             elements: [], // Initially empty, will be filled dynamically

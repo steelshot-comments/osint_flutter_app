@@ -7,6 +7,7 @@ from redis_config import redis_client
 import sqlite3
 import json
 import asyncio
+import uvicorn
 
 active_connections = {}
 
@@ -103,3 +104,6 @@ async def transform_updates(websocket: WebSocket, node_id: str):
             await asyncio.sleep(0.1)
     except WebSocketDisconnect:
         await asyncio.to_thread(pubsub.unsubscribe, "transform_updates")
+
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=8000, reload=True)

@@ -1,4 +1,4 @@
-part of 'graph_view.dart';
+part of 'investigation_page.dart';
 
 class NodeDetailsPanel extends StatefulWidget {
   final Map<String, dynamic> nodeDetails;
