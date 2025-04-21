@@ -11,6 +11,7 @@ class _TabsState extends State<Tabs> with TickerProviderStateMixin {
   List<String> _tabs = ["Tab 1"];
   late TabController _tabController;
   int _tabCount = 1;
+  // final tabProvider = Provider.of<GraphProvider>(context, listen: false);
 
   @override
   void initState() {
@@ -42,6 +43,7 @@ class _TabsState extends State<Tabs> with TickerProviderStateMixin {
   void _loadDataForTab(int index) {
     // String dataUrl = "/assets/web/graph.html"; // Replace with real URLs
     // _controller.loadRequest(Uri.parse(dataUrl));
+    Provider.of<GraphProvider>(context, listen: false).setTabId(index);
   }
 
   void _renameTab(int index) {

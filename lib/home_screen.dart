@@ -1,11 +1,8 @@
 import 'package:final_project/graph/investigation_page.dart';
-// import 'package:final_project/map/map.dart';
 import 'package:final_project/settings_page.dart';
 import 'package:final_project/transforms_timeline.dart';
-// import 'package:final_project/view_data.dart';
 import 'package:flutter/material.dart';
-// import 'add_record.dart';
-// import 'package:map_test/components/dropdown.dart';
+// import 'package:linux_webview/linux_webview_plugin.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -55,11 +52,13 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-      body: <Widget>[
+      body: 
+      <Widget>[
         InvestigationPage(),
         TimelinesPage(),
-        SettingsPage()
+        SettingsPage(),
       ][currentPageIndex],
+      
     );
   }
 }

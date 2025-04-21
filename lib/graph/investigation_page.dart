@@ -36,14 +36,15 @@ class _InvestigationPageState extends State<InvestigationPage> {
   bool hasData = false;
 
   Future<Response> _fetchGraphData() async {
+    print("tab_id: ${Provider.of<GraphProvider>(context, listen: false).getTabId}");
     try {
       final response = await Dio().post('http://192.168.0.114:5500/graph',
           options: Options(
             headers: {"Content-Type": "application/json"},
           ),
           data: {
-            "user_id": "1",
-            "tab_id": "1",
+            "user_id": 1,
+            "tab_id": Provider.of<GraphProvider>(context, listen: false).getTabId,
           });
       return response;
     } catch (e) {
@@ -70,7 +71,6 @@ class _InvestigationPageState extends State<InvestigationPage> {
         // print(edges);
         graphProvider.setGraphData(nodes, edges);
         graphProvider.setLabels(nodes, edges);
-        await graphProvider.fetchActionMap();
 
         setState(() {
           hasData = true;
@@ -105,6 +105,14 @@ class _InvestigationPageState extends State<InvestigationPage> {
       response = await _fetchGraphData();
       _setGraphProvider(context, response);
     }
+  }
+
+  void onMessage(JavaScriptMessage message){
+    Map<String, dynamic> nodeData =
+                Map<String, dynamic>.from(jsonDecode(message.message));
+    setState(() {
+      selectedNode = nodeData;
+    });
   }
 
   void showNodeDetails(Map<String, dynamic> node) {
@@ -161,7 +169,9 @@ class _InvestigationPageState extends State<InvestigationPage> {
       final response = await Dio().delete(
           "http://192.168.0.114:5500/delete-all-nodes",
           data: {"user_id": 1, "tab_id": 1});
-      _controller.reload();
+      if(response.statusCode==200){
+        _controller.reload();
+      }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Error: $e")),
@@ -195,7 +205,8 @@ class _InvestigationPageState extends State<InvestigationPage> {
                         ? TableView()
                         : CustomWebView(
                             assetUrl: 'assets/web/graph.html',
-                            // onMessage: () {},
+                            onMessage: onMessage,
+                            controller: _controller,
                             // onControllerReady:
                             //     () {}
                                 );
@@ -268,6 +279,8 @@ class _InvestigationPageState extends State<InvestigationPage> {
                 icon: Icons.refresh,
                 onPressed: () async {
                   final response = await _fetchGraphData();
+                  _setGraphProvider(context, response);
+                  _controller.reload();
                 },
                 tooltip: "Refresh graph",
               ),

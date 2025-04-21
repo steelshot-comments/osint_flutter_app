@@ -92,19 +92,18 @@ class _NodeDetailsPanelState extends State<NodeDetailsPanel> {
                           style: TextStyle(
                               fontSize: 16, fontWeight: FontWeight.bold),
                         ),
-                        ...actionMap.map((action) {
+                        ...((actionMap as List).map<Widget>((action) {
+                          print("actionnnnnnnnnnnnnnn: $action");
                           final queryValue = widget.nodeDetails['properties']
                               [action["queryField"]];
                           return TransformButton(
-                            text: action["label"]!,
+                            text: action["label"] ?? 'No Label',
                             nodeID: widget.nodeDetails["id"],
-                            source: action["tool"]!,
-                            query: queryValue,
+                            source: action["tool"] ?? 'Unknown',
+                            query: "queryValue",
                           );
-                        })
+                        }).toList()),
                       ]
-                      else
-                        Text("No actions available for this node."),
                     ],
                     SquircleButton(
                       onTap: _deleteNode,

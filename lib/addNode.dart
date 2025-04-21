@@ -1,9 +1,12 @@
 import 'dart:convert';
+import 'dart:io';
 
+import 'package:final_project/components/button.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '/graph/graph_provider.dart';
+// import 'package:provider/provider.dart';
+// import '/graph/graph_provider.dart';
 import 'package:http/http.dart' as http;
+import 'package:file_picker/file_picker.dart';
 
 class AddNodePage extends StatefulWidget {
   const AddNodePage({super.key});
@@ -44,8 +47,9 @@ class _AddNodePageState extends State<AddNodePage> {
   }
 
   void submitNodes() async {
-    int id=1;
-    final Uri url = Uri.parse("http://192.168.0.114:5500/add-record/${id}/${id}/${id}");
+    int id = 1;
+    final Uri url =
+        Uri.parse("http://192.168.0.114:5500/add-record/${id}/${id}/${id}");
     List<Map<String, dynamic>> nodeData = [];
     for (final key in nodeKeys) {
       final state = key.currentState;
@@ -89,7 +93,9 @@ class _AddNodePageState extends State<AddNodePage> {
       body: Column(
         children: [
           Expanded(
-            child: ListView.builder(
+            child: ListView.separated(
+              separatorBuilder: (context, index) =>
+                  Padding(padding: EdgeInsets.fromLTRB(0, 5, 0, 5)),
               itemCount: nodes.length,
               itemBuilder: (context, index) => nodes[index],
             ),
@@ -123,56 +129,74 @@ class NodeForm extends StatefulWidget {
 }
 
 class _NodeFormState extends State<NodeForm> {
-  bool isExpanded = true;
-  List<Map<String, TextEditingController>> properties = [];
   final GlobalKey<FormState> formKey = GlobalKey<FormState>();
-  String? selectedLabel = "";
+  bool isExpanded = true;
 
-  void addProperty() {
-    setState(() {
-      properties.add({
-        "name": TextEditingController(),
-        "value": TextEditingController(),
+  String? selectedLabel;
+  Map<String, TextEditingController> propertyControllers = {};
+  File? selectedFile;
+
+  final Map<String, List<String>> predefinedProperties = {
+    "Phone Number": ["Number", "Country"],
+    "IP Address": ["IP", "ISP"],
+    "Domain": ["Domain", "Registrar"],
+    "Email": ["Email", "Provider"],
+    "Person": ["Name", "Age"],
+    "Account": ["Username", "Platform"],
+    "File": ["File Name"],
+  };
+
+  void pickFile() async {
+    final result = await FilePicker.platform.pickFiles();
+    if (result != null) {
+      final file = File(result.files.single.path!);
+      setState(() {
+        selectedFile = file;
+        propertyControllers["File Name"]?.text = file.path.split('/').last;
       });
-    });
+    }
   }
 
-  void removeProperty(int index) {
+  void removeProperty(String key) {
     setState(() {
-      properties.removeAt(index);
+      propertyControllers.remove(key);
     });
   }
 
   bool validateAndFocus() {
-    if (selectedLabel!.isEmpty) {
-      FocusScope.of(context).requestFocus(FocusNode());
-      return false;
+    if (selectedLabel == null || selectedLabel!.isEmpty) return false;
+
+    for (var controller in propertyControllers.values) {
+      if (controller.text.trim().isEmpty) return false;
     }
-    for (var property in properties) {
-      if (property["name"]!.text.trim().isEmpty ||
-          property["value"]!.text.trim().isEmpty) {
-        FocusScope.of(context).requestFocus(FocusNode());
-        return false;
-      }
-    }
+
     return true;
   }
 
   Map<String, dynamic> getNodeData() {
-    print(selectedLabel);
     return {
       "labels": [selectedLabel],
       "properties": {
-        for (var p in properties)
-          p["name"]!.text.trim(): p["value"]!.text.trim()
+        for (var entry in propertyControllers.entries)
+          entry.key: entry.value.text.trim()
       }
     };
+  }
+
+  void initializeProperties(String label) {
+    propertyControllers.clear();
+    for (var prop in predefinedProperties[label] ?? []) {
+      propertyControllers[prop] = TextEditingController();
+    }
+    if (label == "File") {
+      selectedFile = null;
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return ExpansionTile(
-      initiallyExpanded: true,
+      initiallyExpanded: isExpanded,
       title: Text("New node"),
       trailing: IconButton(
         icon: Icon(Icons.close),
@@ -180,78 +204,71 @@ class _NodeFormState extends State<NodeForm> {
       ),
       children: [
         Padding(
-          padding: EdgeInsets.fromLTRB(16, 0, 16, 4),
-          child: Column(
-            children: [
-              Form(
-                key: formKey,
-                child: Column(
-                  children: [
-                    Consumer<GraphProvider>(
-                      builder: (context, graphProvider, child) {
-                        return DropdownButtonFormField<String>(
-                          value:
-                              graphProvider.nodeLabels.contains(selectedLabel)
-                                  ? selectedLabel
-                                  : null,
-                          onChanged: (value) {
-                            setState(() {
-                              selectedLabel = value;
-                            });
-                            print(selectedLabel);
-                          },
-                          items: graphProvider.nodeLabels.map((label) {
-                            return DropdownMenuItem(
-                              value: label,
-                              child: Text(label),
-                            );
-                          }).toList(),
-                          decoration: const InputDecoration(
-                            labelText: "Labels",
-                          ),
-                        );
-                      },
-                    ),
-                    SizedBox(height: 10),
-                    Column(
-                      children: List.generate(properties.length, (index) {
-                        return Row(
-                          children: [
-                            Expanded(
-                              child: TextFormField(
-                                controller: properties[index]["name"],
-                                decoration:
-                                    InputDecoration(labelText: "Property Name"),
-                                validator: (value) =>
-                                    value!.trim().isEmpty ? "Required" : null,
-                              ),
-                            ),
-                            SizedBox(width: 10),
-                            Expanded(
-                              child: TextFormField(
-                                controller: properties[index]["value"],
-                                decoration: InputDecoration(
-                                    labelText: "Property Value"),
-                                validator: (value) =>
-                                    value!.trim().isEmpty ? "Required" : null,
-                              ),
-                            ),
-                            IconButton(
-                              icon: Icon(Icons.delete),
-                              onPressed: () => removeProperty(index),
-                            ),
-                          ],
-                        );
-                      }),
-                    ),
-                    ElevatedButton(
-                      onPressed: addProperty,
-                      child: Text("Add Property"),
-                    ),
-                  ],
+          padding: EdgeInsets.fromLTRB(16, 0, 16, 8),
+          child: Form(
+            key: formKey,
+            child: Column(
+              children: [
+                DropdownButtonFormField<String>(
+                  value: selectedLabel,
+                  onChanged: (value) {
+                    setState(() {
+                      selectedLabel = value;
+                      initializeProperties(value!);
+                    });
+                  },
+                  decoration: InputDecoration(
+                      labelText: "Label",
+                      fillColor: Color.fromRGBO(247, 255, 255, 1),
+                      filled: true,
+                      border: InputBorder.none),
+                  items: predefinedProperties.keys.map((label) {
+                    return DropdownMenuItem(
+                      value: label,
+                      child: Text(label),
+                    );
+                  }).toList(),
                 ),
-              ),
-            ],
+                SizedBox(height: 10),
+                ...propertyControllers.entries.map((entry) {
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 6.0),
+                    child: Row(children: [
+                      Expanded(
+                        child: TextFormField(
+                          controller: entry.value,
+                          decoration: InputDecoration(
+                              labelText: entry.key,
+                              border: OutlineInputBorder()),
+                          validator: (value) =>
+                              value!.trim().isEmpty ? "Required" : null,
+                          readOnly: selectedLabel == "File" &&
+                              entry.key == "File Name", // prevent editing
+                          onTap: selectedLabel == "File" &&
+                                  entry.key == "File Name"
+                              ? pickFile
+                              : null,
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () => removeProperty(entry.key),
+                        icon: Icon(Icons.delete_outline_rounded),
+                      ),
+                    ]),
+                  );
+                }),
+                SquircleButton(
+                    onTap: () {
+                      setState(() {
+                        final newKey =
+                            "Property ${propertyControllers.length + 1}";
+                        propertyControllers[newKey] = TextEditingController();
+                      });
+                    },
+                    title: "Add property",
+                    background: Color.fromRGBO(247, 255, 255, 1))
+              ],
+            ),
           ),
         ),
       ],

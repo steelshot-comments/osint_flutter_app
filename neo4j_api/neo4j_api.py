@@ -96,7 +96,7 @@ async def add_node(user_id: int, tab_id: int, source_node_id: str,request: List[
     records = result
     if not records:
         raise HTTPException(status_code=500, detail="Failed to add node")
-    return {"message": "Node added successfully", "nodes": records}
+    return {"message": "Node added successfully", "nodes": records, "source_node_id":source_node_id}
 
 # Route to view all nodes
 @app.get("/view-nodes")

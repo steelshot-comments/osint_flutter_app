@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:final_project/graph/graph_provider.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_inappwebview/flutter_inappwebview.dart';
+// import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:provider/provider.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
@@ -10,13 +10,16 @@ typedef JSMessageCallback = void Function(JavaScriptMessage message);
 
 class CustomWebView extends StatefulWidget {
   final String assetUrl;
-  // final void onMessage;
+  final JSMessageCallback onMessage;
+  dynamic controller;
+
   // final Function() onControllerReady;
 
-  const CustomWebView({
+  CustomWebView({
     super.key,
     required this.assetUrl,
-    // required this.onMessage,
+    required this.onMessage,
+    required this.controller,
     // required this.onControllerReady,
   });
 
@@ -25,16 +28,14 @@ class CustomWebView extends StatefulWidget {
 }
 
 class _CustomWebViewState extends State<CustomWebView> {
-  late final dynamic _webController;
-
-  void runGraphScript(String script) {
-    if (Platform.isLinux) {
-      (_webController as InAppWebViewController?)
-          ?.evaluateJavascript(source: script);
-    } else {
-      (_webController as WebViewController?)?.runJavaScript(script);
-    }
-  }
+  // void runGraphScript(String script) {
+  //   if (Platform.isLinux) {
+  //     (_webController as InAppWebViewController?)
+  //         ?.evaluateJavascript(source: script);
+  //   } else {
+  //     (_webController as WebViewController?)?.runJavaScript(script);
+  //   }
+  // }
 
   @override
   void initState() {
@@ -44,30 +45,27 @@ class _CustomWebViewState extends State<CustomWebView> {
         jsonEncode(Provider.of<GraphProvider>(context, listen: false).toJson());
     final escapedJson = jsonEncode(jsonData);
 
-    if (!Platform.isLinux) {
-      _webController = WebViewController()
-        ..setJavaScriptMode(JavaScriptMode.unrestricted)
-        ..addJavaScriptChannel(
-          'FlutterGraphChannel',
-          onMessageReceived: (msg) {
-            Map<String, dynamic> nodeData =
-              Map<String, dynamic>.from(jsonDecode(msg.message));
-            // widget.onMessage(msg);
-          },
-        )
-        ..loadFlutterAsset(widget.assetUrl);
-        _webController.setNavigationDelegate(
-          NavigationDelegate(
-            onPageFinished: (url) {
-              _webController.runJavaScript("window.updateGraphData($escapedJson)");
-            },
-          ),
-        );
-    }
-    // else{
-    //   _webController =
-    // }
+    // if (!Platform.isLinux) {
+    widget.controller
+      ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..addJavaScriptChannel(
+        'FlutterGraphChannel',
+        onMessageReceived: widget.onMessage,
+      )
+      ..loadFlutterAsset(widget.assetUrl);
+    widget.controller.setNavigationDelegate(
+      NavigationDelegate(
+        onPageFinished: (url) {
+          widget.controller
+              .runJavaScript("window.updateGraphData($escapedJson)");
+        },
+      ),
+    );
   }
+  // else{
+  //   _webController =
+  // }
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -75,25 +73,24 @@ class _CustomWebViewState extends State<CustomWebView> {
         // Platform.isLinux
         // ? InAppWebView(
         //     initialUrlRequest: URLRequest(
-        //       url: WebUri("http://localhost:8080/graph.html"),
+        //       url: WebUri("http://localhost:5500/graph.html"),
         //     ),
-        //     initialOptions: InAppWebViewGroupOptions(
-        //       crossPlatform: InAppWebViewOptions(
-        //         javaScriptEnabled: true,
-        //       ),
+        //     initialSettings: InAppWebViewSettings(
+        //       javaScriptEnabled: true,
         //     ),
         //     onWebViewCreated: (controller) {
         //       _webController = controller;
         //       controller.addJavaScriptHandler(
         //         handlerName: "FlutterGraphChannel",
         //         callback: (args) {
-        //           // widget.onMessage(Map<String, dynamic>.from(args.first));
+        //           Map<String, dynamic> nodeData =
+        //               Map<String, dynamic>.from(Map<String, dynamic>.from(args.first));
         //         },
         //       );
         //       // widget.onControllerReady(_webController);
         //     },
         //   )
         // :
-        WebViewWidget(controller: _webController);
+        WebViewWidget(controller: widget.controller);
   }
 }

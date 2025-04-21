@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 
 class GraphProvider extends ChangeNotifier {
+
   // declaration
   List<Map<String, dynamic>> _nodes = [];
   List<String> _nodeLabels = [];
@@ -17,6 +18,7 @@ class GraphProvider extends ChangeNotifier {
   };
   final Map<String, List<Map<String, String>>> _actionMap = {};
   bool _hasFetchedOnce = false;
+  int _tab_id = 1;
 
   // getters
 
@@ -26,6 +28,13 @@ class GraphProvider extends ChangeNotifier {
   List<Map<String, dynamic>> get edges => _edges;
   List<String> get edgeLabels => _edgeLabels;
   Map<String, Color> get labelColors => _labelColors;
+  int get getTabId => _tab_id;
+
+  // setters
+
+  void setTabId(int id){
+    _tab_id = id;
+  }
 
   void setGraphData(
       List<Map<String, dynamic>> nodes, List<Map<String, dynamic>> edges) {
@@ -130,7 +139,6 @@ class GraphProvider extends ChangeNotifier {
   }
 
   Future<void> fetchActionMap() async {
-    try {
       final response = await Dio().get("http://192.168.0.114:8000/action-map");
       final data = Map<String, dynamic>.from(response.data);
       // print("----------------- $data -----------------------");
@@ -141,8 +149,5 @@ class GraphProvider extends ChangeNotifier {
         );
       });
       notifyListeners();
-    } catch (e) {
-      print("Failed to load action map: $e");
-    }
   }
 }
