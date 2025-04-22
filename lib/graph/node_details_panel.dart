@@ -93,7 +93,7 @@ class _NodeDetailsPanelState extends State<NodeDetailsPanel> {
                               fontSize: 16, fontWeight: FontWeight.bold),
                         ),
                         ...((actionMap as List).map<Widget>((action) {
-                          print("actionnnnnnnnnnnnnnn: $action");
+                          // print("actionnnnnnnnnnnnnnn: $action");
                           final queryValue = widget.nodeDetails['properties']
                               [action["queryField"]];
                           return TransformButton(

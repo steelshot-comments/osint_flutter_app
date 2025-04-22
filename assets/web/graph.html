@@ -10,6 +10,23 @@
     <script src="https://unpkg.com/cytoscape-cola/cytoscape-cola.js"></script> -->
 
     <script>
+        window.onerror = (msg, url, line) => {
+            console.error(`JS Error: ${msg} at ${url}:${line}`);
+            // Send errors to Flutter via the registered channel
+            window.onerror = (msg, url, line) => {
+                window.flutterErrorChannel.postMessage(
+                    JSON.stringify({
+                        type: 'jsError',
+                        message: msg,
+                        url: url,
+                        line: line
+                    })
+                );
+                return true; // Prevent default error UI
+            };
+            return true; // Prevent crash
+        };
+
         window.switchToLayout = function (layout) {
             cy.layout({ name: layout, animate: true }).run();
         }

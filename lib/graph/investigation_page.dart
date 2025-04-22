@@ -36,7 +36,8 @@ class _InvestigationPageState extends State<InvestigationPage> {
   bool hasData = false;
 
   Future<Response> _fetchGraphData() async {
-    print("tab_id: ${Provider.of<GraphProvider>(context, listen: false).getTabId}");
+    print(
+        "tab_id: ${Provider.of<GraphProvider>(context, listen: false).getTabId}");
     try {
       final response = await Dio().post('http://192.168.0.114:5500/graph',
           options: Options(
@@ -44,7 +45,8 @@ class _InvestigationPageState extends State<InvestigationPage> {
           ),
           data: {
             "user_id": 1,
-            "tab_id": Provider.of<GraphProvider>(context, listen: false).getTabId,
+            "tab_id":
+                Provider.of<GraphProvider>(context, listen: false).getTabId,
           });
       return response;
     } catch (e) {
@@ -57,7 +59,6 @@ class _InvestigationPageState extends State<InvestigationPage> {
     final graphProvider = Provider.of<GraphProvider>(context, listen: false);
 
     if (response.statusCode == 200) {
-
       final Map<String, dynamic> data = response.data;
 
       if (data['nodes'] is List && data['edges'] is List) {
@@ -79,9 +80,12 @@ class _InvestigationPageState extends State<InvestigationPage> {
           isLoading = false;
         });
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text(
-                "Invalid response structure: Missing 'nodes' or 'edges'")));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content:
+                Text("Invalid response structure: Missing 'nodes' or 'edges'"),
+          ),
+        );
       }
     } else {
       debugPrint("Failed to fetch graph data: ${response.statusCode}");
@@ -107,9 +111,9 @@ class _InvestigationPageState extends State<InvestigationPage> {
     }
   }
 
-  void onMessage(JavaScriptMessage message){
+  void onMessage(JavaScriptMessage message) {
     Map<String, dynamic> nodeData =
-                Map<String, dynamic>.from(jsonDecode(message.message));
+        Map<String, dynamic>.from(jsonDecode(message.message));
     setState(() {
       selectedNode = nodeData;
     });
@@ -169,7 +173,7 @@ class _InvestigationPageState extends State<InvestigationPage> {
       final response = await Dio().delete(
           "http://192.168.0.114:5500/delete-all-nodes",
           data: {"user_id": 1, "tab_id": 1});
-      if(response.statusCode==200){
+      if (response.statusCode == 200) {
         _controller.reload();
       }
     } catch (e) {
@@ -209,7 +213,7 @@ class _InvestigationPageState extends State<InvestigationPage> {
                             controller: _controller,
                             // onControllerReady:
                             //     () {}
-                                );
+                          );
                   } else {
                     return Center(child: Text("No data found!"));
                   }
@@ -291,7 +295,9 @@ class _InvestigationPageState extends State<InvestigationPage> {
               ),
               ToolItem(
                 icon: Icons.arrow_circle_right_outlined,
-                onPressed: () {},
+                onPressed: () {
+                  throw new Exception();
+                },
                 tooltip: "Create edges",
               ),
               ToolItem(

@@ -6,7 +6,7 @@ import 'package:final_project/providers/api_provider.dart';
 import 'package:final_project/providers/theme_provider.dart';
 import 'package:final_project/settings_page.dart';
 // import 'package:final_project/transforms_manager.dart';
-import 'package:final_project/transforms_timeline.dart';
+import 'package:final_project/actions_timeline.dart';
 import 'package:flutter/material.dart';
 import 'package:final_project/auth/auth_screen.dart';
 import 'package:flutter/services.dart';
@@ -39,6 +39,17 @@ void main() async {
   // if (WebView.platform == null) {
   //   WebView.platform = SurfaceAndroidWebView();
   // }
+
+  ErrorWidget.builder = (FlutterErrorDetails details) {
+    return Scaffold(
+      body: Center(
+        child: Text(
+          'Something went wrong!\n${details.exception}',
+          style: TextStyle(color: Colors.red),
+        ),
+      ),
+    );
+  };
 
   runApp(MultiProvider(
     providers: [

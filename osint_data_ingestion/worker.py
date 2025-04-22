@@ -182,7 +182,8 @@ def run_tool(source_name, query, node_id: str):
     publish_transform_update(node_id, "completed", data={"message":"DONEEEE"})
 
     save_result(source_name, query, result)  # Save result in sqlite database
-    post_to_neo4j(node_id,result) # store in neo4j
+    print(result)
+    # post_to_neo4j(node_id,result) # store in neo4j
     return result
 
 def store_scan_results(scan_results):

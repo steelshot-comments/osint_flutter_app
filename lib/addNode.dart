@@ -257,16 +257,17 @@ class _NodeFormState extends State<NodeForm> {
                     ]),
                   );
                 }),
-                SquircleButton(
-                    onTap: () {
-                      setState(() {
-                        final newKey =
-                            "Property ${propertyControllers.length + 1}";
-                        propertyControllers[newKey] = TextEditingController();
-                      });
-                    },
-                    title: "Add property",
-                    background: Color.fromRGBO(247, 255, 255, 1))
+                // SquircleButton(
+                //   onTap: () {
+                //     setState(() {
+                //       final newKey =
+                //           "Property ${propertyControllers.length + 1}";
+                //       propertyControllers[newKey] = TextEditingController();
+                //     });
+                //   },
+                //   title: "Add property",
+                //   background: Color.fromRGBO(247, 255, 255, 1),
+                // )
               ],
             ),
           ),

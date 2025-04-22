@@ -60,7 +60,7 @@ def get_action_map():
 
 @app.post("/run/{source_name}")
 def run_osint_task(source_name: str, req: RunRequest):
-    task = run_tool.delay(source_name, req.query, req.node_id)  # Push task to Celery
+    task = run_tool.delay(source_name, req.query, req.node_id)
     return {"task_id": task.id}
 
 @app.get("/task-result/{task_id}")
