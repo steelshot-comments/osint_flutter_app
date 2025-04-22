@@ -64,9 +64,16 @@ uvicron osint_api:app --host 0.0.0.0 --port 8000
 ### Celery and redis
 Celery workers communicate with the tools API and perform tasks stored in the redis queue
 
-Required libraries - `pip install re requests subprocess`
+Required libraries - ```pip install re requests subprocess```
 
-`celery -A worker worker --loglevel info`
+Run the celery worker -
+```
+celery -A worker worker --loglevel info
+```
+
+[Install redis](https://redis.io/docs/latest/operate/oss_and_stack/install/archive/install-redis/install-redis-on-linux/)
+
+The code should work out of the box when redis-server service is running
 
 Auth API is not fully functional yet
 
