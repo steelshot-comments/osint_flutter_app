@@ -105,10 +105,10 @@ class _InvestigationPageState extends State<InvestigationPage> {
 
   void _fetchAndSetProvider() async {
     Response response;
-    if (!Provider.of<GraphProvider>(context, listen: false).hasFetchedOnce) {
+    // if (!Provider.of<GraphProvider>(context, listen: false).hasFetchedOnce) {
       response = await _fetchGraphData();
       _setGraphProvider(context, response);
-    }
+    // }
   }
 
   void onMessage(JavaScriptMessage message) {
@@ -173,9 +173,9 @@ class _InvestigationPageState extends State<InvestigationPage> {
       final response = await Dio().delete(
           "http://192.168.0.114:5500/delete-all-nodes",
           data: {"user_id": 1, "tab_id": 1});
-      if (response.statusCode == 200) {
-        _controller.reload();
-      }
+      // if (response.statusCode == 200) {
+      //   _controller.reload();
+      // }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Error: $e")),
@@ -282,8 +282,8 @@ class _InvestigationPageState extends State<InvestigationPage> {
               ToolItem(
                 icon: Icons.refresh,
                 onPressed: () async {
-                  final response = await _fetchGraphData();
-                  _setGraphProvider(context, response);
+                  // final response = await _fetchGraphData();
+                  // _setGraphProvider(context, response);
                   _controller.reload();
                 },
                 tooltip: "Refresh graph",

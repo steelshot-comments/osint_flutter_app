@@ -53,14 +53,39 @@ class _AddNodePageState extends State<AddNodePage> {
     List<Map<String, dynamic>> nodeData = [];
     for (final key in nodeKeys) {
       final state = key.currentState;
+
       if (state == null) {
         print("State is null");
         continue;
       }
       if (!state.validateAndFocus()) {
         nodeData = [];
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("Node details are not valid")));
         return;
       }
+
+      if (state.selectedLabel == "File" && state.selectedFile != null) {
+      try {
+        final file = state.selectedFile!;
+        final request = http.MultipartRequest(
+          'POST',
+          Uri.parse("http://192.168.0.114:8000/upload-file"),
+        );
+        request.files.add(await http.MultipartFile.fromPath('file', file.path));
+
+        final response = await request.send();
+        if (response.statusCode != 200) {
+          throw Exception("File upload failed");
+        }
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("File upload failed: $e")),
+        );
+        return;
+      }
+    }
+
       nodeData.add(state.getNodeData());
     }
 
@@ -140,7 +165,7 @@ class _NodeFormState extends State<NodeForm> {
     "Phone Number": ["Number", "Country"],
     "IP Address": ["IP", "ISP"],
     "Domain": ["Domain", "Registrar"],
-    "Email": ["Email", "Provider"],
+    "Email": ["address", "provider"],
     "Person": ["Name", "Age"],
     "Account": ["Username", "Platform"],
     "File": ["File Name"],

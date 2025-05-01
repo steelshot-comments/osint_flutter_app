@@ -94,13 +94,13 @@ class _NodeDetailsPanelState extends State<NodeDetailsPanel> {
                         ),
                         ...((actionMap as List).map<Widget>((action) {
                           // print("actionnnnnnnnnnnnnnn: $action");
-                          final queryValue = widget.nodeDetails['properties']
-                              [action["queryField"]];
+                          print(action["queryField"]);
+                          final queryValue = widget.nodeDetails['properties'][action["queryField"]];
                           return TransformButton(
                             text: action["label"] ?? 'No Label',
                             nodeID: widget.nodeDetails["id"],
                             source: action["tool"] ?? 'Unknown',
-                            query: "queryValue",
+                            query: queryValue?? "Empty",
                           );
                         }).toList()),
                       ]

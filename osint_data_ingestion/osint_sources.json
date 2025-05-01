@@ -115,7 +115,7 @@
     {
       "name":"exiftool",
       "type": "CLI",
-      "command": "exiftool -json {query}"
+      "command": "exiftool -json file_uploads/{query}"
     }
   ]
 }

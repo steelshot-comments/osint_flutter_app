@@ -10,6 +10,10 @@ The project is currently under development and does not have a stable build
 It has been deigned for mobile use but from now on we will focus on desktop more.
 It has not been built on windows and mac yet. Linux does not have good Webview support so that has to be added
 
+>Flutter version: 3.27.3\
+Dart version: 3.6.1\
+DevTools: 2.40.2
+
 ## Project structure
 ```
 /assets
@@ -41,21 +45,29 @@ All apis are running on the public IP of the device. Check your public IP using 
 I have used FastAPI as it is easy to setup and handle errors
 
 Required libraries for FastAPI
-`pip install uvicorn fastapi pydantic`
+```
+pip install uvicorn fastapi pydantic
+```
 
 ### Neo4j
 [Download neo4j desktop](https://neo4j.com/download/)
 
-Required libraries - `pip install neo4j`
-
+Required libraries -
+```
+pip install neo4j
+```
+Then run
 ```
 cd neo4j_api
 uvicorn neo4j_api:app --host 0.0.0.0  --port 5500
 ```
 
 ### Osint tools
-Required libraries - `sqlite3 asyncio`
-
+Required libraries -
+```
+pip install sqlite3 asyncio
+```
+Then run
 ```
 cd osint_data_ingestion
 uvicron osint_api:app --host 0.0.0.0 --port 8000
@@ -64,7 +76,10 @@ uvicron osint_api:app --host 0.0.0.0 --port 8000
 ### Celery and redis
 Celery workers communicate with the tools API and perform tasks stored in the redis queue
 
-Required libraries - ```pip install re requests subprocess```
+Required libraries -
+```
+pip install re requests subprocess
+```
 
 Run the celery worker -
 ```
@@ -79,3 +94,4 @@ Auth API is not fully functional yet
 
 The dockerfiles are for running multiple workers at a time. It can be avoided for now as we just need to test it with one worker
 
+## TODOS

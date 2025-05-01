@@ -1,0 +1,2 @@
+/home/yeshaya/dev/final_project/android/app/.cxx/Debug/221p1k5s/x86/CMakeFiles/edit_cache.dir
+/home/yeshaya/dev/final_project/android/app/.cxx/Debug/221p1k5s/x86/CMakeFiles/rebuild_cache.dir

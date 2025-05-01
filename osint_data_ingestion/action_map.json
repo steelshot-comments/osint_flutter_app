@@ -71,7 +71,7 @@
         {
             "tool": "exiftool",
             "label": "Extract metadata (ExifTool)",
-            "queryField": "path"
+            "queryField": "File Name"
         }
     ],
     "Username": [

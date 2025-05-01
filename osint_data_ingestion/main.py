@@ -1,3 +1,6 @@
+import os
+import shutil
+import time
 from fastapi import FastAPI,WebSocket, WebSocketDisconnect, UploadFile, File, HTTPException
 from fastapi.responses import JSONResponse
 from celery.result import AsyncResult
@@ -57,6 +60,23 @@ def get_action_map():
         action_map = json.load(f)
 
     return JSONResponse(content=action_map)
+
+@app.post("/upload-file")
+async def upload_file(file: UploadFile = File(...)):
+    try:
+        # timestamp = time.strftime("%Y%m%d-%H%M%S")
+        filename = f"{file.filename}"
+        filepath = os.path.join('file_uploads', filename)
+
+        os.makedirs("file_uploads", exist_ok=True)  # Ensure folder exists
+
+        with open(filepath, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"File upload failed: {str(e)}")
+
+    return JSONResponse(content={"message": "File uploaded successfully", "filename": filename})
 
 @app.post("/run/{source_name}")
 def run_osint_task(source_name: str, req: RunRequest):

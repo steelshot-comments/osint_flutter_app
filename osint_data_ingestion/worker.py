@@ -10,6 +10,7 @@ from dotenv import load_dotenv
 from redis_config import redis_client
 import re
 import requests
+from scraper import check_google_result
 
 # Load environment variables
 load_dotenv()
@@ -30,42 +31,28 @@ def post_to_neo4j(node_id: str, nodes):
     try:
         nodes = requests.post(url, json=nodes)
         data = nodes.json()
-        nodes = data["nodes"]
-        relationships = [
-            {
-                "from_id": int(node_id),  # Parent node
-                "to_id": int(node[0]),      # New node's internal ID
-            }
-            for node in data["nodes"]
-        ]
-        request_data = {
-            "pairs": relationships,
-            "relationship": "has account"
-        }
+        # nodes = data["nodes"]
+        # relationships = [
+        #     {
+        #         "from_id": int(node_id),  # Parent node
+        #         "to_id": int(node[0]),      # New node's internal ID
+        #     }
+        #     for node in data["nodes"]
+        # ]
+        # request_data = {
+        #     "pairs": relationships,
+        #     "relationship": "has account"
+        # }
 
-        try:
-            response = requests.post(f"http://192.168.0.114:5500/add-relationship", json=request_data)
-            response.raise_for_status()
-        except requests.RequestException as e:
-            return {"error adding relationships": str(e)}
+        # try:
+        #     response = requests.post(f"http://192.168.0.114:5500/add-relationship", json=request_data)
+        #     response.raise_for_status()
+        # except requests.RequestException as e:
+        #     return {"error adding relationships": str(e)}
         
         return nodes
     except requests.RequestException as e:
         return {"error adding nodes": str(e)}
-
-# def map_sherlock_result_to_nodes(result):
-#     nodes = []
-#     for platform, url in result.items():
-#         node = {
-#             "labels": ["SocialMediaAccount"],
-#             "properties": {
-#                 "platform": platform,
-#                 "url": url
-#             }
-#         }
-#         nodes.append(node)
-#     print(nodes)
-#     return nodes
 
 # Function to publish transform updates to redis queue
 def publish_transform_update(node_id: str, status: str, data: dict = None):
@@ -146,6 +133,86 @@ def parse_sherlock_style_output(output):
         }
     }]
 
+import re
+
+def parse_holehe_sites(output: str):
+    nodes = []
+    lines = output.strip().splitlines()
+    # print(lines)
+
+    for line in lines:
+        # print(line)
+        match = re.match(r"(\[\+|\[-|\[x\]|\[X\])\s+([^\s]+)", line.strip())
+        if match:
+            print("matched")
+            symbol = match.group(1)
+            site = match.group(2)
+
+            if symbol == "[+]":
+                status = "used"
+            elif symbol == "[-]":
+                status = "not_used"
+            elif symbol.lower() == "[x]":
+                status = "rate_limited"
+            else:
+                continue
+
+            node = {
+                "labels": ["Site"],
+                "properties": {
+                    "url": site,
+                    "result": status
+                }
+            }
+            nodes.append(node)
+    print(nodes)
+
+    return nodes
+
+def parse_phoneinfoga_output(output: str):
+    nodes = []
+    lines = output.strip().splitlines()
+
+    for line in lines:
+        if line.strip().startswith("URL:"):
+            url = line.strip().split("URL:")[1].strip()
+            if check_google_result(url):
+                nodes.append({
+                    "labels": ["GoogleSearch"],
+                    "properties": {
+                        "url": url
+                    }
+                })
+
+    return nodes
+
+UNNECESSARY_KEYS = {
+    "Directory", "File Permissions", "ExifTool Version Number", "Exif Version",
+    "Thumbnail Image", "Thumbnail Offset", "Thumbnail Length",
+    "Color Components", "Bits Per Sample", "Encoding Process",
+    "Y Cb Cr Sub Sampling", "Exif Byte Order"
+}
+
+def parse_exiftool_output(output: str):
+    properties = {}
+    lines = output.strip().splitlines()
+    nodes = []
+    
+    for line in lines:
+        if ":" not in line:
+            continue
+        key, value = map(str.strip, line.split(":", 1))
+        if not value or key in UNNECESSARY_KEYS:
+            continue
+        # Normalize key to snake_case
+        key = re.sub(r"[^\w\s]", "", key).strip().lower().replace(" ", "_")
+        properties[key] = value
+    
+    nodes.append({
+        "labels": ["ImageMetadata"],
+        "properties": properties
+    })
+    return nodes
 
 # Celery Task: Run CLI Tool or API
 @celery.task
@@ -171,9 +238,18 @@ def run_tool(source_name, query, node_id: str):
                 publish_transform_update(node_id, "PENDING", data={"message":"Recieved result of command"})
                 # Try to parse JSON output
                 try:
-                    result = json.loads(output)
+                    if(source_name == "holehe"):
+                        result = parse_holehe_sites(output)
+                    elif(source_name == "sherlock"):
+                        result = parse_sherlock_style_output(output)
+                    elif(source_name == "phoneinfoga"):
+                        result = parse_phoneinfoga_output(output)
+                    elif(source_name == "exiftool"):
+                        result = parse_exiftool_output(output)
+                    else:
+                        result = json.loads(output)
                 except json.JSONDecodeError:
-                    result = parse_sherlock_style_output(output)
+                    print("Error in parsing tool output")
             else:
                 result = {"error": proc.stderr.strip()}
         except Exception as e:
@@ -183,7 +259,7 @@ def run_tool(source_name, query, node_id: str):
 
     save_result(source_name, query, result)  # Save result in sqlite database
     print(result)
-    # post_to_neo4j(node_id,result) # store in neo4j
+    post_to_neo4j(node_id,result) # store in neo4j
     return result
 
 def store_scan_results(scan_results):
