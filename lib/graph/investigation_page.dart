@@ -1,10 +1,10 @@
 import 'dart:convert';
 
 import 'package:dio/dio.dart';
-import 'package:final_project/components/button.dart';
-import 'package:final_project/components/transform_button.dart';
-import 'package:final_project/custom_webview.dart';
-import 'package:final_project/graph/tools.dart';
+import 'package:Knotwork/components/button.dart';
+import 'package:Knotwork/components/transform_button.dart';
+import 'package:Knotwork/custom_webview.dart';
+import 'package:Knotwork/graph/tools.dart';
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:provider/provider.dart';

@@ -31,24 +31,24 @@ def post_to_neo4j(node_id: str, nodes):
     try:
         nodes = requests.post(url, json=nodes)
         data = nodes.json()
-        # nodes = data["nodes"]
-        # relationships = [
-        #     {
-        #         "from_id": int(node_id),  # Parent node
-        #         "to_id": int(node[0]),      # New node's internal ID
-        #     }
-        #     for node in data["nodes"]
-        # ]
-        # request_data = {
-        #     "pairs": relationships,
-        #     "relationship": "has account"
-        # }
+        nodes = data["nodes"]
+        relationships = [
+            {
+                "from_id": int(node_id),  # Parent node
+                "to_id": int(node[0]),      # New node's internal ID
+            }
+            for node in data["nodes"]
+        ]
+        request_data = {
+            "pairs": relationships,
+            "relationship": "has account"
+        }
 
-        # try:
-        #     response = requests.post(f"http://192.168.0.114:5500/add-relationship", json=request_data)
-        #     response.raise_for_status()
-        # except requests.RequestException as e:
-        #     return {"error adding relationships": str(e)}
+        try:
+            response = requests.post(f"http://192.168.0.114:5500/add-relationship", json=request_data)
+            response.raise_for_status()
+        except requests.RequestException as e:
+            return {"error adding relationships": str(e)}
         
         return nodes
     except requests.RequestException as e:
@@ -132,8 +132,6 @@ def parse_sherlock_style_output(output):
             "output": output.strip()
         }
     }]
-
-import re
 
 def parse_holehe_sites(output: str):
     nodes = []

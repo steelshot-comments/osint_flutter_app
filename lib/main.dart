@@ -1,19 +1,18 @@
-import 'package:final_project/addNode.dart';
-import 'package:final_project/graph/graph_provider.dart';
-import 'package:final_project/home_screen.dart';
-import 'package:final_project/policies_page.dart';
-import 'package:final_project/providers/api_provider.dart';
-import 'package:final_project/providers/theme_provider.dart';
-import 'package:final_project/settings_page.dart';
-// import 'package:final_project/transforms_manager.dart';
-import 'package:final_project/actions_timeline.dart';
+import 'package:Knotwork/addNode.dart';
+import 'package:Knotwork/graph/graph_provider.dart';
+import 'package:Knotwork/home_screen.dart';
+import 'package:Knotwork/policies_page.dart';
+import 'package:Knotwork/providers/api_provider.dart';
+import 'package:Knotwork/providers/theme_provider.dart';
+import 'package:Knotwork/settings_page.dart';
+// import 'package:Knotwork/transforms_manager.dart';
+import 'package:Knotwork/actions_timeline.dart';
 import 'package:flutter/material.dart';
-import 'package:final_project/auth/auth_screen.dart';
+import 'package:Knotwork/auth/auth_screen.dart';
 import 'package:flutter/services.dart';
 // import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 // import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:provider/provider.dart';
-import 'package:webview_flutter/webview_flutter.dart';
 // import 'package:webview_flutter/webview_flutter.dart';
 
 void main() async {
@@ -114,7 +113,7 @@ class _MainAppState extends State<MainApp> {
           colorScheme: ColorScheme.fromSeed(
             seedColor: Color.fromRGBO(
                 80, 130, 120, 1), // Darker shade of light mode color
-            brightness: Brightness.dark, // Ensures dark mode appearance
+            brightness: Brightness.dark,
           ),
           navigationBarTheme: NavigationBarThemeData(
             backgroundColor: Color(0xFF1E1E1E), // Dark background
@@ -127,7 +126,7 @@ class _MainAppState extends State<MainApp> {
             surfaceTintColor:
                 Color.fromRGBO(24, 26, 32, 1), // Subtle tint for depth
           ),
-          textTheme: TextTheme(), // Can be customized later
+          textTheme: TextTheme(),
           appBarTheme: AppBarTheme(
             backgroundColor: Color(0xFF1E1E1E),
           ), // Dark gray/black for contrast

@@ -15,12 +15,11 @@ class _ToolsState extends State<Tools> {
     return Container(
       color: Theme.of(context).colorScheme.surface,
       child: GridView.count(
-        crossAxisCount: 8, // 8 icons per row
-        shrinkWrap: true, // Ensures the GridView takes only the space it needs
+        crossAxisCount: 8,
+        shrinkWrap: true,
         physics: NeverScrollableScrollPhysics(), // Prevents internal scrolling
         children: List.generate(widget.tools.length, (index) {
           return IconButton(
-            // iconSize: 32,
             icon: Icon(widget.tools[index].icon),
             onPressed: widget.tools[index].onPressed,
             tooltip: widget.tools[index].tooltip,

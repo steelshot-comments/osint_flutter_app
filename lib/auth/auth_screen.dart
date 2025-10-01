@@ -1,9 +1,9 @@
-import 'package:final_project/home_screen.dart';
+import 'package:Knotwork/home_screen.dart';
 import 'package:flutter/material.dart';
 // import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'dart:convert';
-import 'package:final_project/components/input.dart';
-import 'package:final_project/components/button.dart';
+import 'package:Knotwork/components/input.dart';
+import 'package:Knotwork/components/button.dart';
 // import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:passkeys/types.dart';
 import 'package:passkeys_android/passkeys_android.dart';

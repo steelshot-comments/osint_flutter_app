@@ -1,6 +1,6 @@
-import 'package:final_project/graph/investigation_page.dart';
-import 'package:final_project/settings_page.dart';
-import 'package:final_project/actions_timeline.dart';
+import 'package:Knotwork/graph/investigation_page.dart';
+import 'package:Knotwork/settings_page.dart';
+import 'package:Knotwork/actions_timeline.dart';
 import 'package:flutter/material.dart';
 // import 'package:linux_webview/linux_webview_plugin.dart';
 
