@@ -1,4 +1,5 @@
 # OSINT Investigation app
+[![Deploy to Render](https://img.shields.io/badge/Deploy-Render-blue)](https://render.com)
 
 ## Description
 This app abstracts the use complex open source intelligence tools to help in investigations.

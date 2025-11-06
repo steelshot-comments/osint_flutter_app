@@ -22,6 +22,9 @@ class AuthInput extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(5),
       child: TextFormField(
+        style: TextStyle(
+          color: Colors.black
+        ),
         cursorColor: const Color.fromRGBO(75, 204, 178, 1),
         autovalidateMode: AutovalidateMode.always,
         validator: validator,

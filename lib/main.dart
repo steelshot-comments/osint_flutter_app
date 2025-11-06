@@ -9,31 +9,32 @@ import 'package:Knotwork/settings_page.dart';
 import 'package:Knotwork/actions_timeline.dart';
 import 'package:flutter/material.dart';
 import 'package:Knotwork/auth/auth_screen.dart';
-import 'package:flutter/services.dart';
 // import 'package:flutter_inappwebview/flutter_inappwebview.dart';
-// import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:provider/provider.dart';
 // import 'package:webview_flutter/webview_flutter.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized(); // Ensures Flutter is ready
+  WidgetsFlutterBinding.ensureInitialized();
   // InAppWebViewPlatform.instance = InAppWebViewPlatform();
   // SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
   //   systemNavigationBarColor: Colors.transparent, // your theme color here
   //   systemNavigationBarIconBrightness: Brightness.light, // or Brightness.dark
   // ));
-  // final FlutterSecureStorage secureStorage = FlutterSecureStorage();
-  // String? accessToken = await secureStorage.read(key: "access_token");
-  // String? refreshToken = await secureStorage.read(key: "refresh_token");
+  final FlutterSecureStorage secureStorage = FlutterSecureStorage();
+  await dotenv.load(fileName: ".env");
+  String? accessToken = await secureStorage.read(key: "access_token");
+  String? refreshToken = await secureStorage.read(key: "refresh_token");
 
-  // if (accessToken != null) {
-  //   debugPrint("Access token found!");
-  // } else {
-  // Refresh token if needed
-  // final newToken = await refreshAccessToken();
-  // accessToken =
-  // newToken ?? accessToken; // Use the refreshed token if available
-  // }
+  if (accessToken != null) {
+    debugPrint("Access token found!");
+  } else {
+    // Refresh token if needed
+    final newToken = await refreshAccessToken();
+    accessToken =
+        newToken ?? accessToken; // Use the refreshed token if available
+  }
 
   // if (WebView.platform == null) {
   //   WebView.platform = SurfaceAndroidWebView();
@@ -57,7 +58,7 @@ void main() async {
       ChangeNotifierProvider(create: (_) => ThemeProvider()),
     ],
     child:
-        MainApp(isLoggedIn: true //accessToken != null || refreshToken != null
+        MainApp(isLoggedIn: accessToken != null || refreshToken != null
             ),
   ));
 }
@@ -143,10 +144,7 @@ class _MainAppState extends State<MainApp> {
             contentTextStyle: TextStyle(color: Colors.white),
             actionTextColor: Colors.white,
           )),
-      initialRoute:
-          // isLoggedIn ?
-          "/home", //:
-      // "/login",
+      initialRoute: widget.isLoggedIn ? "/home" : "/login",
       routes: {
         "/login": (context) => LoginPage(),
         "/home": (context) => HomeScreen(),

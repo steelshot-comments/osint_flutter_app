@@ -1,19 +1,22 @@
 import 'package:Knotwork/home_screen.dart';
 import 'package:flutter/material.dart';
-// import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'dart:convert';
 import 'package:Knotwork/components/input.dart';
 import 'package:Knotwork/components/button.dart';
-// import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:passkeys/types.dart';
 import 'package:passkeys_android/passkeys_android.dart';
 import 'package:otp/otp.dart';
 import 'package:http/http.dart' as http;
+import 'package:dio/dio.dart';
 part 'passkey_screen.dart';
 part 'totp_auth.dart';
 part 'passkey_logic.dart';
 part 'textfields.dart';
-// part 'auth_logic.dart';
+part 'auth_logic.dart';
+
+final String AUTH_API_URL=dotenv.env['AUTH_API_URL'] ?? "http://localhost:5000";
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -79,11 +82,11 @@ class _LoginPageState extends State<LoginPage> {
                         Color.fromRGBO(121, 191, 172, 1),
                       ]),
                       onTap: () {
-                        // authTypeSignUp
-                        //     ? signUp(usernameController.text,
-                        //         passwordController.text, context)
-                        //     : signIn(usernameController.text,
-                        //         passwordController.text, context);
+                        authTypeSignUp
+                            ? signUp(usernameController.text,
+                                passwordController.text, emailController.text, context)
+                            : signIn(usernameController.text,
+                                passwordController.text, context);
                       },
                       title: authTypeSignUp ? "Sign up" : "Sign in",
                     ),

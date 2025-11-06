@@ -12,9 +12,11 @@ dependencies:
   flutter:
     sdk: flutter
   # flutter_inappwebview: ^6.1.5
+  flutter_dotenv: ^5.1.0
+  transparent_image: ^2.0.0
   flutter_markdown: ^0.7.6+2
   flutter_masked_text2: ^0.9.1
-  # flutter_secure_storage: ^9.2.4
+  flutter_secure_storage: ^9.2.4
   # http: ^1.3.0
   image_picker: ^1.1.2
   # local_auth: ^2.3.0
@@ -40,3 +42,5 @@ flutter:
   assets:
   - assets/web/graph.html
   - assets/policies/policies.md
+  - assets/images/
+  - assets/.env

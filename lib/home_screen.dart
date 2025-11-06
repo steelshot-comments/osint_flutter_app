@@ -1,4 +1,5 @@
 import 'package:Knotwork/graph/investigation_page.dart';
+import 'package:Knotwork/projects_page.dart';
 import 'package:Knotwork/settings_page.dart';
 import 'package:Knotwork/actions_timeline.dart';
 import 'package:flutter/material.dart';
@@ -23,16 +24,15 @@ class _HomeScreenState extends State<HomeScreen> {
     // }
 
     return Scaffold(
-      // appBar: AppBar(
-      //     title: Text("Welcome ${displayName.toString()}!"),
-      //     actions: [
-      //       IconButton(
-      //           onPressed: () {
-      //             Navigator.of(context).push(MaterialPageRoute(
-      //                 builder: (context) => const ProfileCopy()));
-      //           },
-      //           icon: const Icon(Icons.person))
-      //     ]),
+      // appBar:
+      //     AppBar(title: Text("Welcome ${displayName.toString()}!"), actions: [
+      //   IconButton(
+      //       onPressed: () {
+      //         Navigator.of(context).push(
+      //             MaterialPageRoute(builder: (context) => const ProfileCopy()));
+      //       },
+      //       icon: const Icon(Icons.person))
+      // ]),
       bottomNavigationBar: NavigationBar(
         onDestinationSelected: (value) {
           setState(() {
@@ -52,13 +52,12 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-      body: 
-      <Widget>[
-        InvestigationPage(),
+      body: <Widget>[
+        ProjectPage(),
+        // InvestigationPage(),
         TimelinesPage(),
         SettingsPage(),
       ][currentPageIndex],
-      
     );
   }
 }

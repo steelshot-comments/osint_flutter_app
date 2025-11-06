@@ -1,3 +1,4 @@
+import 'package:Knotwork/auth/auth_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:Knotwork/providers/theme_provider.dart';
@@ -19,15 +20,21 @@ class _SettingsPageState extends State<SettingsPage> {
   Widget build(BuildContext context) {
     var themeProvider = Provider.of<ThemeProvider>(context);
     return Scaffold(
-      appBar: AppBar(title: Text("Settings"), automaticallyImplyLeading: false,),
+      appBar: AppBar(
+        title: Text("Settings"),
+        automaticallyImplyLeading: false,
+      ),
       body: ListView(
         children: [
           // General Settings
           _buildSectionHeader("General"),
           _buildDropdownTile(
             "Theme Mode",
-            themeProvider.themeMode.toString().split('.').last, // Convert enum to string
-            ["system", "light", "dark"], // Dropdown options
+            themeProvider.themeMode
+                .toString()
+                .split('.')
+                .last, // Convert enum to string
+            ["system", "light", "dark"],
             (value) {
               if (value != null) {
                 themeProvider.setTheme(
@@ -42,7 +49,8 @@ class _SettingsPageState extends State<SettingsPage> {
 
           // Notifications & Alerts
           _buildSectionHeader("Notifications & Alerts"),
-          _buildSwitchTile("Enable Notifications", enableNotifications, (value) {
+          _buildSwitchTile("Enable Notifications", enableNotifications,
+              (value) {
             setState(() => enableNotifications = value);
           }),
           _buildDropdownTile(
@@ -61,6 +69,8 @@ class _SettingsPageState extends State<SettingsPage> {
             setState(() => autoLogout = value);
           }),
 
+          // logout
+          _buildButtonTile("Log out", logout),
         ],
       ),
     );
@@ -69,7 +79,8 @@ class _SettingsPageState extends State<SettingsPage> {
   Widget _buildSectionHeader(String title) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-      child: Text(title, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+      child: Text(title,
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
     );
   }
 
@@ -81,14 +92,22 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  Widget _buildDropdownTile(String title, String value, List<String> options, Function(String?) onChanged) {
+  Widget _buildDropdownTile(String title, String value, List<String> options,
+      Function(String?) onChanged) {
     return ListTile(
       title: Text(title),
       trailing: DropdownButton<String>(
         value: value,
-        items: options.map((option) => DropdownMenuItem(value: option, child: Text(option))).toList(),
+        items: options
+            .map((option) =>
+                DropdownMenuItem(value: option, child: Text(option)))
+            .toList(),
         onChanged: onChanged,
       ),
     );
+  }
+
+  Widget _buildButtonTile( String value, Function action) {
+    return ElevatedButton(onPressed: ()=>{action}, child: Text(value));
   }
 }
