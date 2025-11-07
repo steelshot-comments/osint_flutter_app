@@ -70,7 +70,7 @@ class _SettingsPageState extends State<SettingsPage> {
           }),
 
           // logout
-          _buildButtonTile("Log out", logout),
+          _buildButtonTile("Log out", ()=>logout(context)),
         ],
       ),
     );
@@ -107,7 +107,7 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  Widget _buildButtonTile( String value, Function action) {
-    return ElevatedButton(onPressed: ()=>{action}, child: Text(value));
+  Widget _buildButtonTile( String value, VoidCallback action) {
+    return ElevatedButton(onPressed: action, child: Text(value));
   }
 }

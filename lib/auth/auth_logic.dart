@@ -18,7 +18,7 @@ Future<void> signIn(String username, String password, BuildContext context, {Str
   );
 
   if (response.statusCode == 200) {
-    final data = jsonDecode(response.data);
+    final data = response.data as Map<String, dynamic>;
     final access_token = data["access_token"];
     final refresh_token = data["refresh_token"];
 
@@ -30,11 +30,12 @@ Future<void> signIn(String username, String password, BuildContext context, {Str
     debugPrint("Login successful!");
     Navigator.pushReplacementNamed(context, "/home");
   } else {
-    debugPrint("Login failed: $response.body");
+    debugPrint("Login failed: ${response.data}");
   }
 }
 
 Future<void> logout(BuildContext context) async {
+  debugPrint("logging out");
   final FlutterSecureStorage secureStorage = FlutterSecureStorage();
 
   await secureStorage.delete(key: "auth_token");
@@ -74,6 +75,9 @@ Future<void> signUp(
       );
       // await signIn(username, password, context);
     } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: response.data)
+      );
       print("Signup failed: ${response.data}");
     }
   } catch (e) {
@@ -89,14 +93,14 @@ Future<String?> refreshAccessToken() async {
     return null;
   }
 
-  final response = await http.post(
-    Uri.parse("$AUTH_API_URL/refresh"),
-    body: jsonEncode({"refresh_token": refreshToken}),
-    headers: {"Content-Type": "application/json"},
+  final response = await Dio().post(
+    "$AUTH_API_URL/refresh",
+    data: jsonEncode({"refresh_token": refreshToken}),
+    options: Options(headers: {"Content-Type": "application/json"}),
   );
 
   if (response.statusCode == 200) {
-    final data = jsonDecode(response.body);
+    final data = jsonDecode(response.data);
     final newAccessToken = data["access_token"];
 
     // Update the stored access token
@@ -105,7 +109,7 @@ Future<String?> refreshAccessToken() async {
     debugPrint("Access token refreshed!");
     return newAccessToken;
   } else {
-    debugPrint("Failed to refresh access token: ${response.body}");
+    debugPrint("Failed to refresh access token: ${response.data}");
     return null;
   }
 }

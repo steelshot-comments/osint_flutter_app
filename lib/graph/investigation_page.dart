@@ -1,11 +1,13 @@
 import 'dart:convert';
 
+import 'package:Knotwork/home_screen.dart';
 import 'package:dio/dio.dart';
 import 'package:Knotwork/components/button.dart';
 import 'package:Knotwork/components/transform_button.dart';
 import 'package:Knotwork/custom_webview.dart';
 import 'package:Knotwork/graph/tools.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:provider/provider.dart';
 import './filters.dart';
@@ -16,7 +18,7 @@ part 'tabs.dart';
 part 'menubar.dart';
 part 'tableView.dart';
 
-// final dio = Dio();
+final NEO4J_API_URL = dotenv.env['NEO4J_API_URL'];
 
 class InvestigationPage extends StatefulWidget {
   const InvestigationPage({super.key});
@@ -39,7 +41,7 @@ class _InvestigationPageState extends State<InvestigationPage> {
     print(
         "tab_id: ${Provider.of<GraphProvider>(context, listen: false).getTabId}");
     try {
-      final response = await Dio().post('http://192.168.0.114:5500/graph',
+      final response = await Dio().post('$NEO4J_API_URL/graph',
           options: Options(
             headers: {"Content-Type": "application/json"},
           ),
@@ -50,7 +52,9 @@ class _InvestigationPageState extends State<InvestigationPage> {
           });
       return response;
     } catch (e) {
-      print("Error fetching graph data: $e");
+      setState(() {
+        isLoading = false;
+      });
       throw Error();
     }
   }
@@ -106,8 +110,8 @@ class _InvestigationPageState extends State<InvestigationPage> {
   void _fetchAndSetProvider() async {
     Response response;
     // if (!Provider.of<GraphProvider>(context, listen: false).hasFetchedOnce) {
-      response = await _fetchGraphData();
-      _setGraphProvider(context, response);
+    response = await _fetchGraphData();
+    _setGraphProvider(context, response);
     // }
   }
 
@@ -127,7 +131,7 @@ class _InvestigationPageState extends State<InvestigationPage> {
 
   void closeNodeDetails() {
     setState(() {
-      selectedNode = null; // Hides the panel
+      selectedNode = null;
     });
   }
 
@@ -170,8 +174,7 @@ class _InvestigationPageState extends State<InvestigationPage> {
 
   void _deleteAllNodes() async {
     try {
-      final response = await Dio().delete(
-          "http://192.168.0.114:5500/delete-all-nodes",
+      final response = await Dio().delete("$NEO4J_API_URL/delete-all-nodes",
           data: {"user_id": 1, "tab_id": 1});
       // if (response.statusCode == 200) {
       //   _controller.reload();
@@ -186,16 +189,16 @@ class _InvestigationPageState extends State<InvestigationPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: isMapMode
-          ? null
-          : AppBar(
+      appBar: (!isMapMode && !isLoading && hasData)
+          ? AppBar(
               automaticallyImplyLeading: false,
               title: MyMenuBar(),
-              bottom: PreferredSize(
+              bottom: const PreferredSize(
                 preferredSize: Size.fromHeight(50),
                 child: Tabs(),
               ),
-            ),
+            )
+          : null,
       body: Column(
         children: [
           Expanded(
@@ -211,11 +214,38 @@ class _InvestigationPageState extends State<InvestigationPage> {
                             assetUrl: 'assets/web/graph.html',
                             onMessage: onMessage,
                             controller: _controller,
-                            // onControllerReady:
-                            //     () {}
                           );
                   } else {
-                    return Center(child: Text("No data found!"));
+                    return Padding(
+                      padding: EdgeInsetsGeometry.only(left: 16, right: 16),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Text(
+                            "Error fetching graph data: Cannot connect to the server",
+                            style: TextStyle(fontSize: 18),
+                          ),
+                          Row(
+                            children: [
+                              TextButton(
+                                onPressed: () => {Navigator.of(context).pop()},
+                                child: Text("Try again"),
+                              ),
+                              TextButton(
+                                onPressed: () => {
+                                  Navigator.of(context).pushReplacement(
+                                    MaterialPageRoute(
+                                      builder: (context) => HomeScreen(),
+                                    ),
+                                  )
+                                },
+                                child: Text("Go back"),
+                              )
+                            ],
+                          )
+                        ],
+                      ),
+                    );
                   }
                 })),
                 if (selectedNode != null)
@@ -235,88 +265,89 @@ class _InvestigationPageState extends State<InvestigationPage> {
               ],
             ),
           ),
-          Tools(
-            tools: [
-              ToolItem(
-                  icon: Icons.search,
-                  onPressed: () => toggleFilterPanel(context),
-                  tooltip: "Search"),
-              ToolItem(
-                  icon: Icons.table_chart,
-                  onPressed: () => isTableViewMode(),
-                  tooltip: "Table View"),
-              ToolItem(
-                  icon: Icons.graphic_eq,
-                  onPressed: () => changeLayout('cose'),
-                  tooltip: "Normal Graph View"),
-              ToolItem(
-                  icon: Icons.hub,
-                  onPressed: () => changeLayout('breadthfirst'),
-                  tooltip: "Hierarchical Graph View"),
-              ToolItem(
-                  icon: Icons.shuffle,
-                  onPressed: () => changeLayout('random'),
-                  tooltip: "Random"),
-              ToolItem(
-                  icon: Icons.grid_3x3,
-                  onPressed: () => changeLayout('grid'),
-                  tooltip: "Grid"),
-              ToolItem(
-                  icon: Icons.circle,
-                  onPressed: () => changeLayout('circle'),
-                  tooltip: "Circle"),
-              ToolItem(
-                  icon: Icons.circle,
-                  onPressed: () => changeLayout('concentric'),
-                  tooltip: "Concentric"),
-              ToolItem(
-                icon: Icons.map,
-                onPressed: _toggleMapMode,
-                tooltip: "Zen Mode",
-              ),
-              ToolItem(
-                icon: Icons.select_all,
-                onPressed: _toggleSelectMode,
-                tooltip: isModeSelection ? "Panning mode" : "Selection mode",
-              ),
-              ToolItem(
-                icon: Icons.refresh,
-                onPressed: () async {
-                  // final response = await _fetchGraphData();
-                  // _setGraphProvider(context, response);
-                  _controller.reload();
-                },
-                tooltip: "Refresh graph",
-              ),
-              ToolItem(
-                icon: Icons.add,
-                onPressed: () => Navigator.of(context).pushNamed("/addNode"),
-                tooltip: "Add node",
-              ),
-              ToolItem(
-                icon: Icons.arrow_circle_right_outlined,
-                onPressed: () {
-                  throw new Exception();
-                },
-                tooltip: "Create edges",
-              ),
-              ToolItem(
-                icon: Icons.undo,
-                onPressed: () {},
-                tooltip: "Undo",
-              ),
-              ToolItem(
-                icon: Icons.redo,
-                onPressed: () {},
-                tooltip: "Redo",
-              ),
-              ToolItem(
-                icon: Icons.clear,
-                onPressed: _deleteAllNodes,
-                tooltip: "Delete all nodes",
-              ),
-            ],
-          ),
+          if (!isLoading && hasData)
+            Tools(
+              tools: [
+                ToolItem(
+                    icon: Icons.search,
+                    onPressed: () => toggleFilterPanel(context),
+                    tooltip: "Search"),
+                ToolItem(
+                    icon: Icons.table_chart,
+                    onPressed: () => isTableViewMode(),
+                    tooltip: "Table View"),
+                ToolItem(
+                    icon: Icons.graphic_eq,
+                    onPressed: () => changeLayout('cose'),
+                    tooltip: "Normal Graph View"),
+                ToolItem(
+                    icon: Icons.hub,
+                    onPressed: () => changeLayout('breadthfirst'),
+                    tooltip: "Hierarchical Graph View"),
+                ToolItem(
+                    icon: Icons.shuffle,
+                    onPressed: () => changeLayout('random'),
+                    tooltip: "Random"),
+                ToolItem(
+                    icon: Icons.grid_3x3,
+                    onPressed: () => changeLayout('grid'),
+                    tooltip: "Grid"),
+                ToolItem(
+                    icon: Icons.circle,
+                    onPressed: () => changeLayout('circle'),
+                    tooltip: "Circle"),
+                ToolItem(
+                    icon: Icons.circle,
+                    onPressed: () => changeLayout('concentric'),
+                    tooltip: "Concentric"),
+                ToolItem(
+                  icon: Icons.map,
+                  onPressed: _toggleMapMode,
+                  tooltip: "Zen Mode",
+                ),
+                ToolItem(
+                  icon: Icons.select_all,
+                  onPressed: _toggleSelectMode,
+                  tooltip: isModeSelection ? "Panning mode" : "Selection mode",
+                ),
+                ToolItem(
+                  icon: Icons.refresh,
+                  onPressed: () async {
+                    // final response = await _fetchGraphData();
+                    // _setGraphProvider(context, response);
+                    _controller.reload();
+                  },
+                  tooltip: "Refresh graph",
+                ),
+                ToolItem(
+                  icon: Icons.add,
+                  onPressed: () => Navigator.of(context).pushNamed("/addNode"),
+                  tooltip: "Add node",
+                ),
+                ToolItem(
+                  icon: Icons.arrow_circle_right_outlined,
+                  onPressed: () {
+                    throw new Exception();
+                  },
+                  tooltip: "Create edges",
+                ),
+                ToolItem(
+                  icon: Icons.undo,
+                  onPressed: () {},
+                  tooltip: "Undo",
+                ),
+                ToolItem(
+                  icon: Icons.redo,
+                  onPressed: () {},
+                  tooltip: "Redo",
+                ),
+                ToolItem(
+                  icon: Icons.clear,
+                  onPressed: _deleteAllNodes,
+                  tooltip: "Delete all nodes",
+                ),
+              ],
+            ),
         ],
       ),
     );

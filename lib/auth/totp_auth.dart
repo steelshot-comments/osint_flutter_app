@@ -7,9 +7,9 @@ String generateOtp(String secret) {
 
 Future<void> loginWithTotp(
     String username, String password, String otpCode, BuildContext context) async {
-  final response = await http.post(
-    Uri.parse('http://your-api-url/login'),
-    body: {
+  final response = await Dio().post(
+    'http://your-api-url/login',
+    data: {
       'username': username,
       'password': password,
       'totp_code': otpCode,

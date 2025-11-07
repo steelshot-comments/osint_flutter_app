@@ -1,3 +1,4 @@
+import 'package:Knotwork/graph/investigation_page.dart';
 import 'package:flutter/material.dart';
 // import 'package:transparent_image/transparent_image.dart';
 
@@ -53,7 +54,9 @@ class ProjectPage extends StatelessWidget {
             ),
             child: InkWell(
               onTap: () {
-                // TODO: Navigate to project details/graph view
+                Navigator.of(context).push(MaterialPageRoute(
+                  builder: (context) => const InvestigationPage(),
+                ));
               },
               child: Column(
                 children: [
@@ -66,56 +69,56 @@ class ProjectPage extends StatelessWidget {
 
                   // Project info
                   Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          project['name'] as String,
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
-                          ),
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        project['name'] as String,
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
                         ),
-                        const SizedBox(height: 8),
-                        Row(
-                          children: [
-                            const Text(
-                              'Users:',
-                              style: TextStyle(
-                                color: Colors.grey,
-                                fontSize: 13,
-                              ),
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          const Text(
+                            'Users:',
+                            style: TextStyle(
+                              color: Colors.grey,
+                              fontSize: 13,
                             ),
-                            const SizedBox(width: 8),
-                            ...users.map((u) {
-                              return Padding(
-                                padding: const EdgeInsets.only(right: 4.0),
-                                child: CircleAvatar(
-                                  radius: 12,
-                                  backgroundImage: NetworkImage(u),
-                                ),
-                              );
-                            }).toList(),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Created: ${project['created']}',
-                          style:
-                              const TextStyle(color: Colors.grey, fontSize: 12),
-                        ),
-                        Text(
-                          'Last Accessed: ${project['lastAccessed']}',
-                          style:
-                              const TextStyle(color: Colors.grey, fontSize: 12),
-                        ),
-                        Text(
-                          'Last Modified: ${project['lastModified']}',
-                          style:
-                              const TextStyle(color: Colors.grey, fontSize: 12),
-                        ),
-                      ],
-                    ),
+                          ),
+                          const SizedBox(width: 8),
+                          ...users.map((u) {
+                            return Padding(
+                              padding: const EdgeInsets.only(right: 4.0),
+                              child: CircleAvatar(
+                                radius: 12,
+                                backgroundImage: NetworkImage(u),
+                              ),
+                            );
+                          }).toList(),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Created: ${project['created']}',
+                        style:
+                            const TextStyle(color: Colors.grey, fontSize: 12),
+                      ),
+                      Text(
+                        'Last Accessed: ${project['lastAccessed']}',
+                        style:
+                            const TextStyle(color: Colors.grey, fontSize: 12),
+                      ),
+                      Text(
+                        'Last Modified: ${project['lastModified']}',
+                        style:
+                            const TextStyle(color: Colors.grey, fontSize: 12),
+                      ),
+                    ],
+                  ),
                 ],
               ),
             ),

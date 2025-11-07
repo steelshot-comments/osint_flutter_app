@@ -1,23 +1,24 @@
 part of 'auth_screen.dart';
 
 Future<void> startPasskeyRegistration(String username) async {
-  final response = await http.post(
-    Uri.parse("http://192.168.0.114:8000/register_passkey"),
-    body: utf8.encode(jsonEncode({"username": username})),
-    headers: {"Content-Type": "application/json; charset=utf-8"},
+
+  final response = await Dio().post(
+    "$AUTH_API_URL/register_passkey",
+    data: utf8.encode(jsonEncode({"username": username})),
+    options: Options(headers: {"Content-Type": "application/json; charset=utf-8"}),
   );
 
   debugPrint("Response status: ${response.statusCode}");
 
   if (response.statusCode == 200) {
-    final data = jsonDecode(response.body);
+    final data = response.data as Map<String, dynamic>;
 
     // Decode the base64 challenge
     final challenge = base64Decode(data["options"]["publicKey"]["challenge"]);
 
     await registerPasskey(username, challenge.toString());
   } else {
-    debugPrint("Failed to start passkey registration: ${response.body}");
+    debugPrint("Failed to start passkey registration: $response.data");
   }
 }
 
@@ -39,10 +40,9 @@ Future<void> registerPasskey(String username, String challenge) async {
   final credential = await passkeys.register(request);
 
   if (credential != null) {
-    final response = await http.post(
-      Uri.parse(
-          "http://192.168.0.114:8000/verify_passkey"), // ✅ Correct endpoint
-      body: jsonEncode({
+    final response = await Dio().post(
+     "$AUTH_API_URL/verify_passkey",
+      data: jsonEncode({
         "username": username,
         "credential": {
           "id": credential.id,
@@ -54,13 +54,13 @@ Future<void> registerPasskey(String username, String challenge) async {
           }
         }, // ✅ Send entire credential object
       }),
-      headers: {"Content-Type": "application/json"},
+      options: Options( headers: {"Content-Type": "application/json"}),
     );
 
     if (response.statusCode == 200) {
       debugPrint("Passkey registered successfully!");
     } else {
-      debugPrint("Passkey registration failed: ${response.body}");
+      debugPrint("Passkey registration failed: $response.data");
     }
   } else {
     debugPrint("Passkey registration failed.");
@@ -69,10 +69,10 @@ Future<void> registerPasskey(String username, String challenge) async {
 
 Future<String> fetchChallenge() async {
   final response =
-      await http.get(Uri.parse("http://192.168.0.114:8000/get_challenge"));
+      await Dio().get("$AUTH_API_URL/get_challenge");
 
   if (response.statusCode == 200) {
-    final data = jsonDecode(response.body);
+    final data = jsonDecode(response.data);
     return data["challenge"];
   } else {
     throw Exception("Failed to fetch challenge");
@@ -93,19 +93,19 @@ Future<void> loginWithPasskey(String username) async {
   final credential = await passkeys.authenticate(request);
 
   if (credential != null) {
-    final response = await http.post(
-      Uri.parse("http://192.168.0.114:8000/login_with_passkey"),
-      body: jsonEncode({
+    final response = await Dio().post(
+      "$AUTH_API_URL/login_with_passkey",
+      data: jsonEncode({
         "username": username,
         "passkey_id": credential.id,
       }),
-      headers: {"Content-Type": "application/json"},
+      options: Options(headers:  {"Content-Type": "application/json"}),
     );
 
     if (response.statusCode == 200) {
       debugPrint("Login successful with Passkey!");
     } else {
-      debugPrint("Passkey login failed: ${response.body}");
+      debugPrint("Passkey login failed: $response.data");
     }
   } else {
     debugPrint("Passkey authentication failed.");

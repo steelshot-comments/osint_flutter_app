@@ -1,5 +1,9 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+
+final PRODUCTION_FASTAPI_URL = dotenv.env['PRODUCTION_FASTAPI_URL'];
+
 
 class GraphProvider extends ChangeNotifier {
 
@@ -139,7 +143,7 @@ class GraphProvider extends ChangeNotifier {
   }
 
   Future<void> fetchActionMap() async {
-      final response = await Dio().get("http://192.168.0.114:8000/action-map");
+      final response = await Dio().get("$PRODUCTION_FASTAPI_URL/action-map");
       final data = Map<String, dynamic>.from(response.data);
       // print("----------------- $data -----------------------");
       _actionMap.clear();

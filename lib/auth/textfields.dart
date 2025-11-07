@@ -3,13 +3,13 @@ part of 'auth_screen.dart';
 class AuthInputs extends StatefulWidget {
   const AuthInputs(
       {super.key,
-      this.usernameController,
-      required this.emailController,
+      required this.usernameController,
+      this.emailController,
       required this.passwordController});
 
   // mark usernameController as nullable
-  final TextEditingController? usernameController;
-  final TextEditingController emailController;
+  final TextEditingController usernameController;
+  final TextEditingController? emailController;
   final TextEditingController passwordController;
 
   @override
@@ -20,14 +20,14 @@ class _AuthInputsState extends State<AuthInputs> {
   @override
   Widget build(BuildContext context) {
     return Column(children: [
-      // show username field only if usernameController is not null
+      // show email field only if emailController is not null
       // fix null check operator used on a null value
-      if (widget.usernameController != null)
+      if (widget.emailController != null)
         AuthInput(
-            controller: widget.usernameController!,
-            icon: const Icon(Icons.person_search_rounded),
+            controller: widget.emailController!,
+            icon: const Icon(Icons.mail_rounded),
             obscureText: false,
-            hintText: 'Display name',),
+            hintText: 'johndoe@company.field.in',),
         const Padding(
           padding: EdgeInsets.symmetric(horizontal: 10),
           child: Divider(
@@ -37,10 +37,10 @@ class _AuthInputsState extends State<AuthInputs> {
           ),
         ),
       AuthInput(
-        controller: widget.emailController,
-        icon: Icon(Icons.mail_rounded),
+        controller: widget.usernameController,
+        icon: Icon(Icons.person_search_rounded),
         obscureText: false,
-        hintText: 'johndoe@company.field.in',
+        hintText: 'Display name',
       ),
       const Padding(
         padding: EdgeInsets.symmetric(horizontal: 10),

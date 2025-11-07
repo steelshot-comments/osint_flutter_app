@@ -8,7 +8,6 @@ import 'package:Knotwork/components/button.dart';
 import 'package:passkeys/types.dart';
 import 'package:passkeys_android/passkeys_android.dart';
 import 'package:otp/otp.dart';
-import 'package:http/http.dart' as http;
 import 'package:dio/dio.dart';
 part 'passkey_screen.dart';
 part 'totp_auth.dart';
@@ -16,7 +15,7 @@ part 'passkey_logic.dart';
 part 'textfields.dart';
 part 'auth_logic.dart';
 
-final String AUTH_API_URL=dotenv.env['AUTH_API_URL'] ?? "http://localhost:5000";
+final AUTH_API_URL = dotenv.env['AUTH_API_URL'];
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -28,13 +27,15 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final TextEditingController usernameController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
-  TextEditingController emailController = TextEditingController();
+  final TextEditingController emailController = TextEditingController();
   // final FlutterSecureStorage storage = FlutterSecureStorage();
   final TextEditingController totpController = TextEditingController();
   GlobalKey<FormState> formkey = GlobalKey<FormState>();
-  bool isTotpEnabled = false;
-  bool isPasskeyEnabled = false;
   bool authTypeSignUp = true;
+  bool isTotpEnabled = true;
+  bool isPasskeyEnabled = true;
+  bool loggingInWithTotp = false;
+  bool loggingInWithPasskey = true;
 
   @override
   Widget build(BuildContext context) {
@@ -54,7 +55,6 @@ class _LoginPageState extends State<LoginPage> {
                       size: 300,
                       color: Color.fromRGBO(75, 204, 178, 0.2),
                     ),
-
                     Container(
                       decoration: BoxDecoration(
                           color: Colors.white,
@@ -66,9 +66,9 @@ class _LoginPageState extends State<LoginPage> {
                             )
                           ]),
                       child: AuthInputs(
-                        emailController: emailController,
-                        usernameController:
-                            authTypeSignUp ? usernameController : null,
+                        emailController:
+                            authTypeSignUp ? emailController : null,
+                        usernameController: usernameController,
                         passwordController: passwordController,
                       ),
                     ),
@@ -83,24 +83,44 @@ class _LoginPageState extends State<LoginPage> {
                       ]),
                       onTap: () {
                         authTypeSignUp
-                            ? signUp(usernameController.text,
-                                passwordController.text, emailController.text, context)
+                            ? signUp(
+                                usernameController.text,
+                                passwordController.text,
+                                emailController.text,
+                                context)
                             : signIn(usernameController.text,
                                 passwordController.text, context);
                       },
-                      title: authTypeSignUp ? "Sign up" : "Sign in",
+                      title: authTypeSignUp ? "Sign up" : "Log in",
                     ),
-                    // if (isTotpEnabled)
-                    //   TextField(
-                    //     controller: totpController,
-                    //     decoration: InputDecoration(labelText: "TOTP Code"),
-                    //   ),
-                    // SizedBox(height: 20),
-                    // if (isPasskeyEnabled)
-                    //   ElevatedButton(
-                    //     onPressed: loginWithPasskey,
-                    //     child: Text("Login with Passkey"),
-                    //   ),
+                    if(!authTypeSignUp && (isTotpEnabled || isPasskeyEnabled))
+                      SizedBox(height: 20),
+                    if (!authTypeSignUp && isTotpEnabled && loggingInWithPasskey)
+                      GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            loggingInWithTotp = true;
+                            loggingInWithPasskey = false;
+                          });
+                        },
+                        child: Text(
+                          "Log in with Authenticator app",
+                          style: const TextStyle(color: Colors.white),
+                        ),
+                      ),
+                    if (!authTypeSignUp && isPasskeyEnabled && loggingInWithTotp)
+                      GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            loggingInWithPasskey = true;
+                            loggingInWithTotp = false;
+                          });
+                        },
+                        child: Text(
+                          "Log in with Passkey",
+                          style: const TextStyle(color: Colors.white),
+                        ),
+                      ),
                     const SizedBox(
                       height: 20,
                     ),

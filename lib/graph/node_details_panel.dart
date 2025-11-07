@@ -16,7 +16,7 @@ class _NodeDetailsPanelState extends State<NodeDetailsPanel> {
 
   void _deleteNode() async {
     await Dio().delete(
-      "http://192.168.0.114:5500/delete-node/${widget.nodeDetails["id"]}",
+      "$NEO4J_API_URL/delete-node/${widget.nodeDetails["id"]}",
     );
     // remove node from graph
     context.read<GraphProvider>().removeNodes([widget.nodeDetails["id"]]);

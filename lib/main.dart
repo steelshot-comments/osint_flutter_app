@@ -23,7 +23,7 @@ void main() async {
   //   systemNavigationBarIconBrightness: Brightness.light, // or Brightness.dark
   // ));
   final FlutterSecureStorage secureStorage = FlutterSecureStorage();
-  await dotenv.load(fileName: ".env");
+  await dotenv.load(fileName: "assets/.env");
   String? accessToken = await secureStorage.read(key: "access_token");
   String? refreshToken = await secureStorage.read(key: "refresh_token");
 

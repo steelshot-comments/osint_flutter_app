@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class TransformButton extends StatefulWidget {
   final String text;
@@ -24,6 +25,8 @@ class _TransformButtonState extends State<TransformButton> {
   bool _isLoading = false;
   WebSocketChannel? _channel;
   String _wsMessage = ''; // Store latest WebSocket message
+  final PRODUCTION_FASTAPI_URL=dotenv.env['PRODUCTION_FASTAPI_URL'];
+  final PRODUCTION_WS_FASTAPI_URL=dotenv.env['PRODUCTION_WS_FASTAPI_URL'];
 
   List<String> nodeTypes = [
     "email",
@@ -44,7 +47,7 @@ class _TransformButtonState extends State<TransformButton> {
     try {
       // Send POST request
       await Dio().post(
-        "http://192.168.0.114:8000/run/${widget.source}",
+        "$PRODUCTION_FASTAPI_URL/run/${widget.source}",
         data: {
           "query": widget.query,
           "node_id": widget.nodeID,
@@ -56,7 +59,7 @@ class _TransformButtonState extends State<TransformButton> {
 
       // Connect to WebSocket
       _channel = WebSocketChannel.connect(
-        Uri.parse("ws://192.168.0.114:8000/ws/transforms/${widget.nodeID}"),
+        Uri.parse("$PRODUCTION_WS_FASTAPI_URL/ws/transforms/${widget.nodeID}"),
       );
 
       // Listen for WebSocket messages
@@ -106,7 +109,7 @@ class _TransformButtonState extends State<TransformButton> {
         child: Text(widget.text),
       ),
       const SizedBox(width: 12),
-      Expanded( // So the message text doesn't overflow
+      Expanded(
         child: Text(
           _wsMessage,
           style: const TextStyle(fontSize: 14),
