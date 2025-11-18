@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:knotwork/components/button.dart';
 import 'package:knotwork/projects/graph/graph_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
@@ -148,18 +149,22 @@ class _AddNodePageState extends State<AddNodePage> {
               itemBuilder: (context, index) => nodes[index],
             ),
           ),
+          SizedBox(height: 10,),
           Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            spacing: 16,
             children: [
-              ElevatedButton(
-                onPressed: addCard,
-                child: Text("Add Another Node"),
+              SquircleButton(
+                onTap: addCard,
+                title: "Add another node",
               ),
-              ElevatedButton(
-                onPressed: submitNodes,
-                child: Text("Submit"),
+              SquircleButton(
+                onTap: submitNodes,
+                title: "Submit",
               ),
             ],
-          )
+          ),
+          SizedBox(height: 10,)
         ],
       ),
     );

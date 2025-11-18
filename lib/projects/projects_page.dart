@@ -154,15 +154,22 @@ class _ProjectPageState extends State<ProjectPage> {
                         style: TextStyle(color: Colors.grey),
                       ),
                     )
-                  : ListView.builder(
-                    padding: EdgeInsets.fromLTRB(16, 16, 16, 0),
+                  : GridView.builder(
+                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
                       itemCount: projects.length,
+                      gridDelegate:
+                          const SliverGridDelegateWithMaxCrossAxisExtent(
+                        maxCrossAxisExtent: 400, // max width for each card
+                        mainAxisSpacing: 16,
+                        crossAxisSpacing: 16,
+                        childAspectRatio:
+                            3 / 2, // tweak to fit your card height
+                      ),
                       itemBuilder: (context, index) {
                         final project = projects[index];
 
                         return Card(
-                          color: Color(0xFF1E1E1E),
-                          margin: const EdgeInsets.only(bottom: 16),
+                          color: const Color(0xFF1E1E1E),
                           child: InkWell(
                             onTap: () {
                               Navigator.of(context).push(MaterialPageRoute(
@@ -194,43 +201,22 @@ class _ProjectPageState extends State<ProjectPage> {
                                     style: const TextStyle(
                                         color: Colors.grey, fontSize: 12),
                                   ),
+                                  const Spacer(),
                                   Row(
                                     spacing: 8.0,
                                     children: [
-                                      // ElevatedButton.icon(
-                                      //   style: ElevatedButton.styleFrom(
-                                      //     shape: RoundedRectangleBorder(
-                                      //         borderRadius:
-                                      //             BorderRadius.circular(10)),
-                                      //     backgroundColor: Colors.yellow[200],
-                                      //   ),
-                                      //   onPressed: () => {},
-                                      //   icon: Icon(Icons.edit,
-                                      //       color: Colors.black87),
-                                      //   label: Text(
-                                      //     'Edit',
-                                      //     style:
-                                      //         TextStyle(color: Colors.black87),
-                                      //   ),
-                                      // ),
-                                      // ElevatedButton.icon(
-                                      //   style: ElevatedButton.styleFrom(
-                                      //     shape: RoundedRectangleBorder(
-                                      //         borderRadius:
-                                      //             BorderRadius.circular(10)),
-                                      //     backgroundColor: Colors.red[200],
-                                      //   ),
-                                      //   onPressed: () => {},
-                                      //   icon: Icon(Icons.delete,
-                                      //       color: Colors.black87),
-                                      //   label: Text(
-                                      //     'Delete',
-                                      //     style:
-                                      //         TextStyle(color: Colors.black87),
-                                      //   ),
-                                      // ),
-                                      SquircleButton(onTap: ()=>{}, title: 'Edit', background: Colors.yellow[200], icon: Icons.edit,),
-                                      SquircleButton(onTap: ()=>{}, title: 'Delete', background: Colors.red[200], icon: Icons.delete,)
+                                      SquircleButton(
+                                        onTap: () {},
+                                        title: 'Edit',
+                                        background: Colors.yellow[200],
+                                        icon: Icons.edit,
+                                      ),
+                                      SquircleButton(
+                                        onTap: () {},
+                                        title: 'Delete',
+                                        background: Colors.red[200],
+                                        icon: Icons.delete,
+                                      )
                                     ],
                                   )
                                 ],

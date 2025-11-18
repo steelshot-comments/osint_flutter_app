@@ -9,6 +9,7 @@ import 'package:knotwork/custom_webview.dart';
 import 'package:knotwork/projects/graph/tools.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:knotwork/settings_page.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:provider/provider.dart';
 import 'filters.dart';

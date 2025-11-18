@@ -8,10 +8,9 @@ class Tabs extends StatefulWidget {
 }
 
 class _TabsState extends State<Tabs> with TickerProviderStateMixin {
-  List<String> _tabs = ["Tab 1"];
+  List<String> _tabs = ["Graph 1"];
   late TabController _tabController;
   int _tabCount = 1;
-  // final tabProvider = Provider.of<GraphProvider>(context, listen: false);
 
   @override
   void initState() {
@@ -28,7 +27,7 @@ class _TabsState extends State<Tabs> with TickerProviderStateMixin {
   void _addNewTab() {
     setState(() {
       _tabCount++;
-      _tabs.add("Tab $_tabCount");
+      _tabs.add("Graph $_tabCount");
 
       _tabController = TabController(
         length: _tabs.length,
@@ -54,11 +53,11 @@ class _TabsState extends State<Tabs> with TickerProviderStateMixin {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text("Rename Tab"),
+          title: Text("Rename Graph"),
           content: TextField(
             controller: textController,
             autofocus: true,
-            decoration: InputDecoration(hintText: "Enter tab name"),
+            decoration: InputDecoration(hintText: "Enter graph name"),
           ),
           actions: [
             TextButton(
@@ -158,7 +157,7 @@ class _TabsState extends State<Tabs> with TickerProviderStateMixin {
         IconButton(
           icon: Icon(Icons.add),
           onPressed: _addNewTab,
-          tooltip: "New Tab",
+          tooltip: "New Graph",
         ),
       ],
     );

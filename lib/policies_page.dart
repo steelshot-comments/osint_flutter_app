@@ -27,6 +27,7 @@ class _PoliciesPageState extends State<PoliciesPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(title: Text('Policies'),),
       body: markdownData.isEmpty
           ? Center(child: Text("Oops! Our lawyers must be on vacation. No policies found — proceed at your own risk!"))
           : Padding(
