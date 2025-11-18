@@ -15,11 +15,32 @@ class _NodeDetailsPanelState extends State<NodeDetailsPanel> {
   bool isMinimized = false;
 
   void _deleteNode() async {
-    await Dio().delete(
-      "$NEO4J_API_URL/delete-node/${widget.nodeDetails["id"]}",
+    await Dio().delete("$NEO4J_API_URL/delete-node/${widget.nodeDetails["id"]}");
+
+    widget.onClose();
+  }
+
+  void _sendToEditPage() {
+    final nodes = [
+      {
+        "node_id": widget.nodeDetails["id"],
+        "properties":
+            Map<String, dynamic>.from(widget.nodeDetails["properties"]),
+      }
+    ];
+
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => EditNodePage(
+          nodes: nodes,
+        ),
+      ),
     );
-    // remove node from graph
-    context.read<GraphProvider>().removeNodes([widget.nodeDetails["id"]]);
+  }
+
+  void _cloneNode() async {
+    await Dio().put("$NEO4J_API_URL/clone-node",
+        data: {"id": widget.nodeDetails["id"]});
     widget.onClose();
   }
 
@@ -27,6 +48,7 @@ class _NodeDetailsPanelState extends State<NodeDetailsPanel> {
   Widget build(BuildContext context) {
     final label = widget.nodeDetails['label'];
     final actionMap = context.watch<GraphProvider>().getActionsForLabel(label);
+
     // print("-------------------------- $actionMap -----------------------");
 
     return Container(
@@ -71,7 +93,7 @@ class _NodeDetailsPanelState extends State<NodeDetailsPanel> {
           // Content (Only Visible When Not Minimized)
           if (!isMinimized)
             SizedBox(
-              height: 200, // Keeps content scrollable within a fixed height
+              height: 200,
               child: SingleChildScrollView(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -93,23 +115,28 @@ class _NodeDetailsPanelState extends State<NodeDetailsPanel> {
                               fontSize: 16, fontWeight: FontWeight.bold),
                         ),
                         ...((actionMap as List).map<Widget>((action) {
-                          // print("actionnnnnnnnnnnnnnn: $action");
-                          print(action["queryField"]);
-                          final queryValue = widget.nodeDetails['properties'][action["queryField"]];
+                          debugPrint(action["queryField"]);
+                          final queryValue = widget.nodeDetails['properties']
+                              [action["queryField"]];
                           return TransformButton(
                             text: action["label"] ?? 'No Label',
                             nodeID: widget.nodeDetails["id"],
                             source: action["tool"] ?? 'Unknown',
-                            query: queryValue?? "Empty",
+                            query: queryValue ?? "Empty",
                           );
                         }).toList()),
-                      ]
+                      ],
+                      Divider()
                     ],
+                    SquircleButton(onTap: _sendToEditPage, title: "Edit",),
+                    SizedBox(height: 10,),
+                    SquircleButton(onTap: _cloneNode, title: "Clone", background: Colors.orange,),
+                    SizedBox(height: 10,),
                     SquircleButton(
                       onTap: _deleteNode,
                       title: "Delete",
                       background: Colors.red,
-                    )
+                    ),
                   ],
                 ),
               ),

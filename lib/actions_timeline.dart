@@ -13,6 +13,7 @@ class _TimelinesPageState extends State<TimelinesPage> {
   List<dynamic> timelineData = [];
   bool isLoading = true;
   final PRODUCTION_FASTAPI_URL = dotenv.env['PRODUCTION_FASTAPI_URL'];
+  final FASTAPI_URL = dotenv.env['FASTAPI_URL'];
 
   @override
   void initState() {
@@ -22,7 +23,7 @@ class _TimelinesPageState extends State<TimelinesPage> {
 
   Future<void> fetchTimelines() async {
     try {
-      var response = await Dio().get('$PRODUCTION_FASTAPI_URL/task-results');
+      var response = await Dio().get('$FASTAPI_URL/task-results');
       setState(() {
         timelineData = response.data;
         isLoading = false;
@@ -37,7 +38,7 @@ class _TimelinesPageState extends State<TimelinesPage> {
 
   Future<void> deleteTransform(String id) async {
     try {
-      await Dio().delete('http://192.168.0.114:8000/delete-task-result/$id');
+      await Dio().delete('$FASTAPI_URL/delete-task-result/$id');
       setState(() {
         // print(timelineData.length);
         timelineData.removeWhere((item) {

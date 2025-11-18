@@ -5,11 +5,48 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>OSINT Graph</title>
-    <script src="https://unpkg.com/cytoscape@3.21.0/dist/cytoscape.min.js"></script>
-    <!-- <script src="https://unpkg.com/webcola/WebCola/cola.min.js"></script>
-    <script src="https://unpkg.com/cytoscape-cola/cytoscape-cola.js"></script> -->
+    <script src="/cytoscape.min.js"></script>
 
     <script>
+        const cy = cytoscape({
+            container: document.getElementById('cy'),
+            elements: [], // Initially empty, will be filled dynamically
+            style: [
+                {
+                    selector: 'node',
+                    style: {
+                        'background-color': function (ele) {
+                            return getColorForType(ele.data('label'));
+                        },
+                        'label': 'data(label)',
+                        'color': '#fff',
+                        'text-outline-color': '#333',
+                        'text-outline-width': 2
+                    }
+                },
+                {
+                    selector: 'edge',
+                    style: {
+                        'width': 2,
+                        'label': 'data(label)',
+                        'line-color': '#ccc',
+                        'target-arrow-shape': 'triangle',
+                        'target-arrow-color': '#ccc',
+                        'curve-style': 'bezier'
+                    }
+                },
+                {
+                    selector: '.highlighted',
+                    style: {
+                        'border-color': '#f00',
+                        'border-width': 3
+                    }
+                }
+            ],
+            layout: { name: 'cose' }
+        });
+        window.cy = cy;
+
         window.onerror = (msg, url, line) => {
             console.error(`JS Error: ${msg} at ${url}:${line}`);
             // Send errors to Flutter via the registered channel
@@ -74,45 +111,6 @@
 
     <script>
         console.log("Update graph data is of type: " + typeof window.updateGraphData);
-        const cy = cytoscape({
-            container: document.getElementById('cy'),
-            elements: [], // Initially empty, will be filled dynamically
-            style: [
-                {
-                    selector: 'node',
-                    style: {
-                        'background-color': function (ele) {
-                            return getColorForType(ele.data('label'));
-                        },
-                        'label': 'data(label)',
-                        'color': '#fff',
-                        'text-outline-color': '#333',
-                        'text-outline-width': 2
-                    }
-                },
-                {
-                    selector: 'edge',
-                    style: {
-                        'width': 2,
-                        'label': 'data(label)',
-                        'line-color': '#ccc',
-                        'target-arrow-shape': 'triangle',
-                        'target-arrow-color': '#ccc',
-                        'curve-style': 'bezier'
-                    }
-                },
-                {
-                    selector: '.highlighted',
-                    style: {
-                        'border-color': '#f00',
-                        'border-width': 3
-                    }
-                }
-
-            ],
-            layout: { name: 'cose' }
-        });
-        window.cy = cy;
 
         cy.on('tap', 'node', function (event) {
             var node = event.target;

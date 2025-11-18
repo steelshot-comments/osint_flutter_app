@@ -1,18 +1,19 @@
 import 'dart:convert';
 
-import 'package:Knotwork/home_screen.dart';
+import 'package:knotwork/edit_node.dart';
+import 'package:knotwork/home_screen.dart';
 import 'package:dio/dio.dart';
-import 'package:Knotwork/components/button.dart';
-import 'package:Knotwork/components/transform_button.dart';
-import 'package:Knotwork/custom_webview.dart';
-import 'package:Knotwork/graph/tools.dart';
+import 'package:knotwork/components/button.dart';
+import 'package:knotwork/components/transform_button.dart';
+import 'package:knotwork/custom_webview.dart';
+import 'package:knotwork/projects/graph/tools.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:provider/provider.dart';
-import './filters.dart';
+import 'filters.dart';
 import 'package:flutter/services.dart';
-import './graph_provider.dart';
+import 'graph_provider.dart';
 part 'node_details_panel.dart';
 part 'tabs.dart';
 part 'menubar.dart';
@@ -36,19 +37,18 @@ class _InvestigationPageState extends State<InvestigationPage> {
   bool filterPanelVisible = false;
   bool isLoading = false;
   bool hasData = false;
+  Dio dio = Dio();
 
   Future<Response> _fetchGraphData() async {
-    print(
-        "tab_id: ${Provider.of<GraphProvider>(context, listen: false).getTabId}");
     try {
-      final response = await Dio().post('$NEO4J_API_URL/graph',
+      final response = await dio.post('$NEO4J_API_URL/graph',
           options: Options(
             headers: {"Content-Type": "application/json"},
           ),
           data: {
-            "user_id": 1,
-            "tab_id":
-                Provider.of<GraphProvider>(context, listen: false).getTabId,
+            "user_id": "550e8400-e29b-41d4-a716-446655440000",
+            "project_id": "550e8400-e29b-41d4-a716-446655440000",
+            "graph_id": "550e8400-e29b-41d4-a716-446655440000",
           });
       return response;
     } catch (e) {
@@ -99,6 +99,7 @@ class _InvestigationPageState extends State<InvestigationPage> {
   @override
   void initState() {
     super.initState();
+    dio.interceptors.add(LogInterceptor(responseBody: true, requestBody: true));
     setState(() {
       isLoading = true;
     });
@@ -175,7 +176,7 @@ class _InvestigationPageState extends State<InvestigationPage> {
   void _deleteAllNodes() async {
     try {
       final response = await Dio().delete("$NEO4J_API_URL/delete-all-nodes",
-          data: {"user_id": 1, "tab_id": 1});
+          data: {"user_id": 1, "project_id": "1", "graph_id": ""});
       // if (response.statusCode == 200) {
       //   _controller.reload();
       // }
@@ -228,7 +229,12 @@ class _InvestigationPageState extends State<InvestigationPage> {
                           Row(
                             children: [
                               TextButton(
-                                onPressed: () => {Navigator.of(context).pop()},
+                                onPressed: () => {
+                                  setState(() {
+                                    isLoading = true;
+                                  }),
+                                  _fetchAndSetProvider()
+                                },
                                 child: Text("Try again"),
                               ),
                               TextButton(
@@ -277,30 +283,6 @@ class _InvestigationPageState extends State<InvestigationPage> {
                     onPressed: () => isTableViewMode(),
                     tooltip: "Table View"),
                 ToolItem(
-                    icon: Icons.graphic_eq,
-                    onPressed: () => changeLayout('cose'),
-                    tooltip: "Normal Graph View"),
-                ToolItem(
-                    icon: Icons.hub,
-                    onPressed: () => changeLayout('breadthfirst'),
-                    tooltip: "Hierarchical Graph View"),
-                ToolItem(
-                    icon: Icons.shuffle,
-                    onPressed: () => changeLayout('random'),
-                    tooltip: "Random"),
-                ToolItem(
-                    icon: Icons.grid_3x3,
-                    onPressed: () => changeLayout('grid'),
-                    tooltip: "Grid"),
-                ToolItem(
-                    icon: Icons.circle,
-                    onPressed: () => changeLayout('circle'),
-                    tooltip: "Circle"),
-                ToolItem(
-                    icon: Icons.circle,
-                    onPressed: () => changeLayout('concentric'),
-                    tooltip: "Concentric"),
-                ToolItem(
                   icon: Icons.map,
                   onPressed: _toggleMapMode,
                   tooltip: "Zen Mode",
@@ -346,6 +328,34 @@ class _InvestigationPageState extends State<InvestigationPage> {
                   onPressed: _deleteAllNodes,
                   tooltip: "Delete all nodes",
                 ),
+              ],
+              toolDropdowns: [
+                ToolDropdown(name: "Graph layout", dropDownItems: [
+                  ToolItem(
+                      icon: Icons.graphic_eq,
+                      onPressed: () => changeLayout('cose'),
+                      tooltip: "Normal Graph View"),
+                  ToolItem(
+                      icon: Icons.hub,
+                      onPressed: () => changeLayout('breadthfirst'),
+                      tooltip: "Hierarchical Graph View"),
+                  ToolItem(
+                      icon: Icons.shuffle,
+                      onPressed: () => changeLayout('random'),
+                      tooltip: "Random"),
+                  ToolItem(
+                      icon: Icons.grid_3x3,
+                      onPressed: () => changeLayout('grid'),
+                      tooltip: "Grid"),
+                  ToolItem(
+                      icon: Icons.circle,
+                      onPressed: () => changeLayout('circle'),
+                      tooltip: "Circle"),
+                  ToolItem(
+                      icon: Icons.circle,
+                      onPressed: () => changeLayout('concentric'),
+                      tooltip: "Concentric"),
+                ])
               ],
             ),
         ],

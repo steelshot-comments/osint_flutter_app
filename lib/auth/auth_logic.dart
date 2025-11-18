@@ -1,23 +1,24 @@
 part of 'auth_screen.dart';
 final FlutterSecureStorage secureStorage = FlutterSecureStorage();
 
-Future<void> signIn(String username, String password, BuildContext context, {String? totpCode}) async {
+Future<void> login(String username, String password, BuildContext context, {String? totpCode}) async {
   // String? totpCode = isTotpEnabled ? totpController.text : null;
   Dio dio = Dio();
   dio.interceptors.add(LogInterceptor(responseBody: true, requestBody: true));
 
   final response = await dio.post(
     "$AUTH_API_URL/login",
-    data: jsonEncode({
+    data: {
       "username": username,
       "password": password,
-    }),
+    },
     options: Options(
       headers: {"Content-Type": "application/json", "Accept": "application/json"},
     )
   );
 
   if (response.statusCode == 200) {
+    debugPrint("hello");
     final data = response.data as Map<String, dynamic>;
     final access_token = data["access_token"];
     final refresh_token = data["refresh_token"];
@@ -38,8 +39,9 @@ Future<void> logout(BuildContext context) async {
   debugPrint("logging out");
   final FlutterSecureStorage secureStorage = FlutterSecureStorage();
 
-  await secureStorage.delete(key: "auth_token");
   await secureStorage.delete(key: "username");
+  await secureStorage.delete(key: "access_token");
+  await secureStorage.delete(key: "refresh_token");
 
   debugPrint("Logged out successfully!");
 
@@ -49,16 +51,14 @@ Future<void> logout(BuildContext context) async {
 
 Future<void> signUp(
     String username, String password, String email, BuildContext context) async {
-      Dio dio = Dio();
-      dio.interceptors.add(LogInterceptor(responseBody: true, requestBody: true));
   try {
-    final response = await dio.post(
+    final response = await Dio().post(
       "$AUTH_API_URL/register",
-      data: jsonEncode({
+      data: {
         "username": username,
         "password": password,
         "email": email
-      }),
+      },
       options: Options(
         headers: {"Content-Type": "application/json", "Accept": "application/json"}
       ),
@@ -95,7 +95,7 @@ Future<String?> refreshAccessToken() async {
 
   final response = await Dio().post(
     "$AUTH_API_URL/refresh",
-    data: jsonEncode({"refresh_token": refreshToken}),
+    data: {"refresh_token": refreshToken},
     options: Options(headers: {"Content-Type": "application/json"}),
   );
 

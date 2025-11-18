@@ -1,7 +1,6 @@
-import 'package:Knotwork/graph/investigation_page.dart';
-import 'package:Knotwork/projects_page.dart';
-import 'package:Knotwork/settings_page.dart';
-import 'package:Knotwork/actions_timeline.dart';
+import 'package:knotwork/projects/projects_page.dart';
+import 'package:knotwork/settings_page.dart';
+import 'package:knotwork/actions_timeline.dart';
 import 'package:flutter/material.dart';
 // import 'package:linux_webview/linux_webview_plugin.dart';
 
@@ -24,15 +23,6 @@ class _HomeScreenState extends State<HomeScreen> {
     // }
 
     return Scaffold(
-      // appBar:
-      //     AppBar(title: Text("Welcome ${displayName.toString()}!"), actions: [
-      //   IconButton(
-      //       onPressed: () {
-      //         Navigator.of(context).push(
-      //             MaterialPageRoute(builder: (context) => const ProfileCopy()));
-      //       },
-      //       icon: const Icon(Icons.person))
-      // ]),
       bottomNavigationBar: NavigationBar(
         onDestinationSelected: (value) {
           setState(() {

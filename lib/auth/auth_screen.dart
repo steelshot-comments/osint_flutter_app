@@ -1,10 +1,10 @@
-import 'package:Knotwork/home_screen.dart';
+import 'package:knotwork/home_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'dart:convert';
-import 'package:Knotwork/components/input.dart';
-import 'package:Knotwork/components/button.dart';
+import 'package:knotwork/components/input.dart';
+import 'package:knotwork/components/button.dart';
 import 'package:passkeys/types.dart';
 import 'package:passkeys_android/passkeys_android.dart';
 import 'package:otp/otp.dart';
@@ -88,7 +88,7 @@ class _LoginPageState extends State<LoginPage> {
                                 passwordController.text,
                                 emailController.text,
                                 context)
-                            : signIn(usernameController.text,
+                            : login(usernameController.text,
                                 passwordController.text, context);
                       },
                       title: authTypeSignUp ? "Sign up" : "Log in",

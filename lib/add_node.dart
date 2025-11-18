@@ -1,11 +1,10 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:Knotwork/components/button.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:knotwork/projects/graph/graph_provider.dart';
 import 'package:flutter/material.dart';
-// import 'package:provider/provider.dart';
-// import '/graph/graph_provider.dart';
-import 'package:http/http.dart' as http;
+import 'package:dio/dio.dart';
 import 'package:file_picker/file_picker.dart';
 
 class AddNodePage extends StatefulWidget {
@@ -17,6 +16,7 @@ class AddNodePage extends StatefulWidget {
 class _AddNodePageState extends State<AddNodePage> {
   List<GlobalKey<_NodeFormState>> nodeKeys = [];
   List<NodeForm> nodes = [];
+  final NEO4J_URL = dotenv.env['NEO4J_API_URL'];
 
   @override
   void initState() {
@@ -47,53 +47,76 @@ class _AddNodePageState extends State<AddNodePage> {
   }
 
   void submitNodes() async {
-    int id = 1;
-    final Uri url =
-        Uri.parse("http://192.168.0.114:5500/add-record/${id}/${id}/${id}");
+    final String url = "$NEO4J_URL/add-node";
+
     List<Map<String, dynamic>> nodeData = [];
+
     for (final key in nodeKeys) {
       final state = key.currentState;
 
-      if (state == null) {
-        print("State is null");
-        continue;
-      }
+      if (state == null) continue;
+
       if (!state.validateAndFocus()) {
         nodeData = [];
         ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text("Node details are not valid")));
+          SnackBar(content: Text("Node details are not valid")),
+        );
         return;
       }
 
+      // OPTIONAL – handle file uploads
       if (state.selectedLabel == "File" && state.selectedFile != null) {
-      try {
-        final file = state.selectedFile!;
-        final request = http.MultipartRequest(
-          'POST',
-          Uri.parse("http://192.168.0.114:8000/upload-file"),
-        );
-        request.files.add(await http.MultipartFile.fromPath('file', file.path));
+        try {
+          final file = state.selectedFile!;
+          final formData = FormData.fromMap({
+            'file': await MultipartFile.fromFile(file.path),
+          });
 
-        final response = await request.send();
-        if (response.statusCode != 200) {
-          throw Exception("File upload failed");
+          final response = await Dio().post(
+            "$FASTAPI_URL/upload-file",
+            data: formData,
+            options: Options(headers: {
+              "Content-Type": "multipart/form-data",
+            }),
+          );
+
+          if (response.statusCode != 200) {
+            throw Exception("File upload failed");
+          }
+        } catch (e) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("File upload failed: $e")),
+          );
+          return;
         }
-      } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("File upload failed: $e")),
-        );
-        return;
       }
+
+      // Collect node data
+      nodeData.add({
+        ...state.getNodeData(),
+        // "source_node_id": UniqueKey().toString(),
+      });
     }
 
-      nodeData.add(state.getNodeData());
-    }
+    // request body
+    final payload = {
+      "user_id": "550e8400-e29b-41d4-a716-446655440000",
+      "graph_id": "550e8400-e29b-41d4-a716-446655440000",
+      "project_id": "550e8400-e29b-41d4-a716-446655440000",
+      "nodes": nodeData,
+    };
+
+    print("=== OUTGOING PAYLOAD ===");
+    print(payload.runtimeType);
+    print(payload);
+    print("=== JSON ENCODED ===");
+    print(jsonEncode(payload));
 
     try {
-      final response = await http.post(
+      final response = await Dio().post(
         url,
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode(nodeData),
+        options: Options(headers: {"Content-Type": "application/json"}),
+        data: payload,
       );
 
       if (response.statusCode == 200) {
@@ -235,7 +258,7 @@ class _NodeFormState extends State<NodeForm> {
             child: Column(
               children: [
                 DropdownButtonFormField<String>(
-                  value: selectedLabel,
+                  initialValue: selectedLabel,
                   onChanged: (value) {
                     setState(() {
                       selectedLabel = value;
@@ -244,7 +267,6 @@ class _NodeFormState extends State<NodeForm> {
                   },
                   decoration: InputDecoration(
                       labelText: "Label",
-                      fillColor: Color.fromRGBO(247, 255, 255, 1),
                       filled: true,
                       border: InputBorder.none),
                   items: predefinedProperties.keys.map((label) {

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:Knotwork/graph/graph_provider.dart';
+import 'package:knotwork/projects/graph/graph_provider.dart';
 import 'package:provider/provider.dart';
 
 class FilterPanel extends StatefulWidget {

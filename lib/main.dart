@@ -1,19 +1,20 @@
-import 'package:Knotwork/addNode.dart';
-import 'package:Knotwork/graph/graph_provider.dart';
-import 'package:Knotwork/home_screen.dart';
-import 'package:Knotwork/policies_page.dart';
-import 'package:Knotwork/providers/api_provider.dart';
-import 'package:Knotwork/providers/theme_provider.dart';
-import 'package:Knotwork/settings_page.dart';
-// import 'package:Knotwork/transforms_manager.dart';
-import 'package:Knotwork/actions_timeline.dart';
+import 'package:knotwork/add_node.dart';
+import 'package:knotwork/projects/graph/graph_provider.dart';
+import 'package:knotwork/home_screen.dart';
+import 'package:knotwork/policies_page.dart';
+import 'package:knotwork/providers/api_provider.dart';
+import 'package:knotwork/providers/theme_provider.dart';
+import 'package:knotwork/settings_page.dart';
+import 'package:knotwork/actions_timeline.dart';
 import 'package:flutter/material.dart';
-import 'package:Knotwork/auth/auth_screen.dart';
-// import 'package:flutter_inappwebview/flutter_inappwebview.dart';
+import 'package:knotwork/auth/auth_screen.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:provider/provider.dart';
-// import 'package:webview_flutter/webview_flutter.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'themes.dart';
+// import 'package:webview_flutter/webview_flutter.dart';
+// import 'package:flutter_inappwebview/flutter_inappwebview.dart';
+// import 'package:knotwork/transforms_manager.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -57,9 +58,7 @@ void main() async {
       ChangeNotifierProvider(create: (_) => GraphProvider()),
       ChangeNotifierProvider(create: (_) => ThemeProvider()),
     ],
-    child:
-        MainApp(isLoggedIn: accessToken != null || refreshToken != null
-            ),
+    child: MainApp(isLoggedIn: accessToken != null || refreshToken != null),
   ));
 }
 
@@ -85,68 +84,61 @@ class _MainAppState extends State<MainApp> {
     final themeProvider = context.watch<ThemeProvider>();
     return MaterialApp(
       themeMode: themeProvider.flutterThemeMode,
-      theme: ThemeData(
-          navigationBarTheme: NavigationBarThemeData(
-            backgroundColor: Colors.white,
-            indicatorShape: const RoundedRectangleBorder(
-                borderRadius: BorderRadius.all(Radius.circular(10))),
-            height: kToolbarHeight + 10,
-            overlayColor: const WidgetStatePropertyAll(Colors.white),
-            surfaceTintColor: Colors.white,
+      theme: AppTheme.lightTheme.copyWith(
+        navigationBarTheme: const NavigationBarThemeData(
+          backgroundColor: Colors.white,
+          indicatorShape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.all(Radius.circular(10)),
           ),
-          colorScheme:
-              ColorScheme.fromSeed(seedColor: Color.fromRGBO(121, 191, 172, 1)),
-          textTheme: TextTheme(),
-          appBarTheme: AppBarTheme(backgroundColor: Colors.white),
-          menuBarTheme: MenuBarThemeData(
-            style: MenuStyle(
-              elevation: WidgetStatePropertyAll(0),
-            ),
+          height: kToolbarHeight + 10,
+          overlayColor: WidgetStatePropertyAll(Colors.white),
+          surfaceTintColor: Colors.white,
+        ),
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Colors.white,
+        ),
+        menuBarTheme: const MenuBarThemeData(
+          style: MenuStyle(
+            elevation: WidgetStatePropertyAll(0),
           ),
-          scaffoldBackgroundColor: Colors.white,
-          snackBarTheme: SnackBarThemeData(
-            backgroundColor: Colors.white,
-            closeIconColor: Colors.black,
-            contentTextStyle: TextStyle(color: Colors.black),
-            actionTextColor: Colors.black,
-          )),
-      darkTheme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(
-            seedColor: Color.fromRGBO(
-                80, 130, 120, 1), // Darker shade of light mode color
-            brightness: Brightness.dark,
+        ),
+        scaffoldBackgroundColor: Colors.white,
+        snackBarTheme: const SnackBarThemeData(
+          backgroundColor: Colors.white,
+          closeIconColor: Colors.black,
+          contentTextStyle: TextStyle(color: Colors.black),
+          actionTextColor: Colors.black,
+        ),
+      ),
+      darkTheme: AppTheme.darkTheme.copyWith(
+        navigationBarTheme: const NavigationBarThemeData(
+          backgroundColor: Color(0xFF1E1E1E),
+          indicatorShape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.all(Radius.circular(10)),
           ),
-          navigationBarTheme: NavigationBarThemeData(
-            backgroundColor: Color(0xFF1E1E1E), // Dark background
-            indicatorShape: const RoundedRectangleBorder(
-              borderRadius: BorderRadius.all(Radius.circular(10)),
-            ),
-            height: kToolbarHeight + 10,
-            overlayColor: const WidgetStatePropertyAll(
-                Color.fromRGBO(30, 30, 30, 0.5)), // Slightly lighter overlay
-            surfaceTintColor:
-                Color.fromRGBO(24, 26, 32, 1), // Subtle tint for depth
+          height: kToolbarHeight + 10,
+          overlayColor: WidgetStatePropertyAll(Color.fromRGBO(30, 30, 30, 0.5)),
+          surfaceTintColor: Color.fromRGBO(24, 26, 32, 1),
+        ),
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Color(0xFF1E1E1E),
+        ),
+        menuBarTheme: const MenuBarThemeData(
+          style: MenuStyle(
+            elevation: WidgetStatePropertyAll(0),
           ),
-          textTheme: TextTheme(),
-          appBarTheme: AppBarTheme(
-            backgroundColor: Color(0xFF1E1E1E),
-          ), // Dark gray/black for contrast
-          menuBarTheme: MenuBarThemeData(
-            style: MenuStyle(
-              elevation: WidgetStatePropertyAll(0),
-            ),
-          ),
-          scaffoldBackgroundColor:
-              Color(0xFF121212), // Standard dark mode background
-          snackBarTheme: SnackBarThemeData(
-            backgroundColor: Color(0xFF1E1E1E),
-            closeIconColor: Colors.white,
-            contentTextStyle: TextStyle(color: Colors.white),
-            actionTextColor: Colors.white,
-          )),
+        ),
+        scaffoldBackgroundColor: const Color(0xFF121212),
+        snackBarTheme: const SnackBarThemeData(
+          backgroundColor: Color(0xFF1E1E1E),
+          closeIconColor: Colors.white,
+          contentTextStyle: TextStyle(color: Colors.white),
+          actionTextColor: Colors.white,
+        ),
+      ),
       initialRoute: widget.isLoggedIn ? "/home" : "/login",
       routes: {
-        "/login": (context) => LoginPage(),
+"        /login": (context) => LoginPage(),
         "/home": (context) => HomeScreen(),
         "/policies": (context) => PoliciesPage(),
         "/settings": (context) => SettingsPage(),
