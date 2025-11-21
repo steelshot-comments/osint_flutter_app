@@ -45,7 +45,7 @@ class _MyMenuBarState extends State<MyMenuBar> {
           {"Go back": () => Navigator.of(context).pop()},
           {"Go Forward": () {}},
           {"Go to settings": () {
-            Navigator.of(context).push(MaterialPageRoute(builder: (context)=>SettingsPage()));
+            Navigator.of(context).pushNamed('/settings');
           }},
         ]),
       ],

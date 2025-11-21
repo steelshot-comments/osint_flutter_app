@@ -1,8 +1,8 @@
+import 'package:knotwork/map/map.dart';
 import 'package:knotwork/projects/projects_page.dart';
 import 'package:knotwork/settings_page.dart';
 import 'package:knotwork/actions_timeline.dart';
 import 'package:flutter/material.dart';
-// import 'package:linux_webview/linux_webview_plugin.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -16,11 +16,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // final user = FirebaseAuth.instance.currentUser;
-    // String? displayName = "user";
-    // if (user != null) {
-    //   displayName = user.displayName;
-    // }
 
     return Scaffold(
       bottomNavigationBar: NavigationBar(
@@ -44,7 +39,8 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       body: <Widget>[
         ProjectPage(),
-        TimelinesPage(),
+        // TimelinesPage(),
+        MapScreen(),
         SettingsPage(),
       ][currentPageIndex],
     );

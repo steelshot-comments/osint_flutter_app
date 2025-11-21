@@ -2,6 +2,7 @@ import 'package:knotwork/add_node.dart';
 import 'package:knotwork/projects/graph/graph_provider.dart';
 import 'package:knotwork/home_screen.dart';
 import 'package:knotwork/policies_page.dart';
+import 'package:knotwork/projects/graph/investigation_page.dart';
 import 'package:knotwork/providers/api_provider.dart';
 import 'package:knotwork/providers/theme_provider.dart';
 import 'package:knotwork/settings_page.dart';
@@ -12,8 +13,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'themes.dart';
-// import 'package:webview_flutter/webview_flutter.dart';
-// import 'package:flutter_inappwebview/flutter_inappwebview.dart';
+import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -22,10 +22,14 @@ void main() async {
   //   systemNavigationBarColor: Colors.transparent, // your theme color here
   //   systemNavigationBarIconBrightness: Brightness.light, // or Brightness.dark
   // ));
+
   final FlutterSecureStorage secureStorage = FlutterSecureStorage();
   await dotenv.load(fileName: "assets/.env");
   String? accessToken = await secureStorage.read(key: "access_token");
   String? refreshToken = await secureStorage.read(key: "refresh_token");
+  final String mapbox_access_token =
+      dotenv.env['ACCESS_TOKEN']!;
+  MapboxOptions.setAccessToken(mapbox_access_token);
 
   if (accessToken != null) {
     debugPrint("Access token found!");
@@ -144,6 +148,7 @@ class _MainAppState extends State<MainApp> {
       routes: {
         "/login": (context) => LoginPage(),
         "/home": (context) => HomeScreen(),
+        "/investigation": (context) => InvestigationPage(),
         "/policies": (context) => PoliciesPage(),
         "/settings": (context) => SettingsPage(),
         "/timeline": (context) => TimelinesPage(),

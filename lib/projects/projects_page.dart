@@ -1,5 +1,4 @@
 import 'package:knotwork/components/button.dart';
-import 'package:knotwork/projects/graph/investigation_page.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -12,7 +11,7 @@ class ProjectPage extends StatefulWidget {
 }
 
 class _ProjectPageState extends State<ProjectPage> {
-  final AUTH_API_URL = dotenv.env['AUTH_API_URL'];
+  final auth_api_url = dotenv.env['AUTH_API_URL'];
   final Dio _dio = Dio();
 
   List<Map<String, dynamic>> projects = [];
@@ -28,7 +27,7 @@ class _ProjectPageState extends State<ProjectPage> {
 
     try {
       final response = await _dio.get(
-        '$AUTH_API_URL/projects',
+        '$auth_api_url/projects',
         data: {"userID": 4},
       );
 
@@ -59,7 +58,7 @@ class _ProjectPageState extends State<ProjectPage> {
   Future<void> _createProject(String name, String description) async {
     try {
       final response = await _dio.post(
-        '$AUTH_API_URL/add-project',
+        '$auth_api_url/add-project',
         data: {
           "userID": 4,
           "username": "Yeshaya",
@@ -128,6 +127,25 @@ class _ProjectPageState extends State<ProjectPage> {
     );
   }
 
+  Future<void> _deleteProject(int projectID)async{
+    try{
+      final response = await _dio.post('$auth_api_url/delete-project', data: {'projectID': projectID});
+      if (response.statusCode == 200) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Project deleted successfully")),
+        );
+        await _fetchProjects();
+      } else {
+        throw Exception("Failed to create project");
+      }
+    }
+    catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Could not delete project")),
+      );
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -172,9 +190,7 @@ class _ProjectPageState extends State<ProjectPage> {
                           color: const Color(0xFF1E1E1E),
                           child: InkWell(
                             onTap: () {
-                              Navigator.of(context).push(MaterialPageRoute(
-                                builder: (context) => const InvestigationPage(),
-                              ));
+                              Navigator.of(context).pushNamed('/investigation');
                             },
                             child: Padding(
                               padding: const EdgeInsets.all(16.0),
@@ -212,7 +228,7 @@ class _ProjectPageState extends State<ProjectPage> {
                                         icon: Icons.edit,
                                       ),
                                       SquircleButton(
-                                        onTap: () {},
+                                        onTap: () => _deleteProject(project['id']),
                                         title: 'Delete',
                                         background: Colors.red[200],
                                         icon: Icons.delete,

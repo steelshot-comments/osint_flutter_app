@@ -1,7 +1,6 @@
 import 'dart:convert';
 
 import 'package:knotwork/edit_node.dart';
-import 'package:knotwork/home_screen.dart';
 import 'package:dio/dio.dart';
 import 'package:knotwork/components/button.dart';
 import 'package:knotwork/components/transform_button.dart';
@@ -9,11 +8,10 @@ import 'package:knotwork/custom_webview.dart';
 import 'package:knotwork/projects/graph/tools.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:knotwork/settings_page.dart';
-import 'package:webview_flutter/webview_flutter.dart';
 import 'package:provider/provider.dart';
+import 'package:webview_flutter/webview_flutter.dart';
+// import 'package:webview_all/webview_all.dart';
 import 'filters.dart';
-import 'package:flutter/services.dart';
 import 'graph_provider.dart';
 part 'node_details_panel.dart';
 part 'tabs.dart';
@@ -30,8 +28,10 @@ class InvestigationPage extends StatefulWidget {
 }
 
 class _InvestigationPageState extends State<InvestigationPage> {
+  // InAppWebViewController? _controller;
   late final WebViewController _controller = WebViewController();
-  Map<String, dynamic>? selectedNode; // Holds the currently selected node
+
+  Map<String, dynamic>? selectedNode;
   bool isMapMode = false;
   bool isTableView = false;
   bool isModeSelection = false;
@@ -178,9 +178,9 @@ class _InvestigationPageState extends State<InvestigationPage> {
     try {
       final response = await Dio().delete("$NEO4J_API_URL/delete-all-nodes",
           data: {"user_id": 1, "project_id": "1", "graph_id": ""});
-      // if (response.statusCode == 200) {
-      //   _controller.reload();
-      // }
+      if (response.statusCode == 200) {
+        _controller.reload();
+      }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Error: $e")),
@@ -188,88 +188,89 @@ class _InvestigationPageState extends State<InvestigationPage> {
     }
   }
 
+  Widget _buildErrorDialog() {
+    return Padding(
+      padding: EdgeInsetsGeometry.only(left: 16, right: 16),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Text(
+            "Error fetching graph data: Cannot connect to the server",
+            style: TextStyle(fontSize: 18),
+          ),
+          Row(
+            children: [
+              TextButton(
+                onPressed: () => {
+                  setState(() {
+                    isLoading = true;
+                  }),
+                  _fetchAndSetProvider()
+                },
+                child: Text("Try again"),
+              ),
+              TextButton(
+                onPressed: () =>
+                    {Navigator.of(context).pushReplacementNamed('/home')},
+                child: Text("Go back"),
+              )
+            ],
+          )
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: (!isMapMode && !isLoading && hasData)
-          ? AppBar(
+      appBar: (isMapMode || isLoading || !hasData)
+          ? null
+          : AppBar(
               automaticallyImplyLeading: false,
               title: MyMenuBar(),
-              bottom: const PreferredSize(
-                preferredSize: Size.fromHeight(50),
-                child: Tabs(),
-              ),
-            )
-          : null,
+            ),
       body: Column(
         children: [
           Expanded(
-            child: Stack(
-              children: [
-                Positioned.fill(child: Builder(builder: (context) {
-                  if (isLoading) {
-                    return Center(child: CircularProgressIndicator());
-                  } else if (hasData) {
-                    return isTableView
-                        ? TableView()
-                        : CustomWebView(
-                            assetUrl: 'assets/web/graph.html',
-                            onMessage: onMessage,
-                            controller: _controller,
-                          );
-                  } else {
-                    return Padding(
-                      padding: EdgeInsetsGeometry.only(left: 16, right: 16),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Text(
-                            "Error fetching graph data: Cannot connect to the server",
-                            style: TextStyle(fontSize: 18),
-                          ),
-                          Row(
-                            children: [
-                              TextButton(
-                                onPressed: () => {
-                                  setState(() {
-                                    isLoading = true;
-                                  }),
-                                  _fetchAndSetProvider()
-                                },
-                                child: Text("Try again"),
-                              ),
-                              TextButton(
-                                onPressed: () => {
-                                  Navigator.of(context).pushReplacement(
-                                    MaterialPageRoute(
-                                      builder: (context) => HomeScreen(),
-                                    ),
-                                  )
-                                },
-                                child: Text("Go back"),
-                              )
-                            ],
-                          )
-                        ],
+            child: Tabs(
+              tabContentBuilder: (index) {
+                return Stack(
+                  children: [
+                    Positioned.fill(child: Builder(
+                      builder: (context) {
+                        if (isLoading) {
+                          return Center(child: CircularProgressIndicator());
+                        } else if (hasData) {
+                          return isTableView
+                              ? TableView()
+                              // : Webview(url: 'assets/web/graph.html');
+                              : CustomWebView(
+                                  assetUrl: 'assets/web/graph.html',
+                                  onMessage: onMessage,
+                                  controller: _controller);
+                        } else {
+                          return _buildErrorDialog();
+                        }
+                      },
+                    )),
+                    if (selectedNode != null)
+                      Positioned(
+                        bottom: 0,
+                        left: 0,
+                        right: 0,
+                        child: NodeDetailsPanel(
+                          nodeDetails: selectedNode!,
+                          onClose: closeNodeDetails,
+                        ),
                       ),
-                    );
-                  }
-                })),
-                if (selectedNode != null)
-                  Positioned(
-                    bottom: 0,
-                    left: 0,
-                    right: 0,
-                    child: NodeDetailsPanel(
-                      nodeDetails: selectedNode!,
-                      onClose: closeNodeDetails,
-                    ),
-                  ),
-                if (filterPanelVisible)
-                  FilterPanel(
-                    searchGraph: searchGraph,
-                  ),
-              ],
+                    if (filterPanelVisible)
+                      FilterPanel(
+                        searchGraph: searchGraph,
+                      ),
+                  ],
+                );
+              },
             ),
           ),
           if (!isLoading && hasData)
@@ -298,7 +299,7 @@ class _InvestigationPageState extends State<InvestigationPage> {
                   onPressed: () async {
                     // final response = await _fetchGraphData();
                     // _setGraphProvider(context, response);
-                    _controller.reload();
+                    // _controller.reload();
                   },
                   tooltip: "Refresh graph",
                 ),

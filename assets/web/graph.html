@@ -5,12 +5,35 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>OSINT Graph</title>
-    <script src="/cytoscape.min.js"></script>
+    <script src="cytoscape.min.js" preload></script>
+
+    <script>
+        window.onerror = (msg, url, line) => {
+            console.error(`JS Error: ${msg} at ${url}:${line}`);
+            // Send errors to Flutter via the registered channel
+            window.onerror = (msg, url, line) => {
+                window.flutterErrorChannel.postMessage(
+                    JSON.stringify({
+                        type: 'jsError',
+                        message: msg,
+                        url: url,
+                        line: line
+                    })
+                );
+                return true; // Prevent default error UI
+            };
+            return true; // Prevent crash
+        };
+    </script>
+</head>
+
+<body>
+    <div id="cy" style="width: 100%; height: 100vh;"></div>
 
     <script>
         const cy = cytoscape({
             container: document.getElementById('cy'),
-            elements: [], // Initially empty, will be filled dynamically
+            elements: [],
             style: [
                 {
                     selector: 'node',
@@ -46,70 +69,6 @@
             layout: { name: 'cose' }
         });
         window.cy = cy;
-
-        window.onerror = (msg, url, line) => {
-            console.error(`JS Error: ${msg} at ${url}:${line}`);
-            // Send errors to Flutter via the registered channel
-            window.onerror = (msg, url, line) => {
-                window.flutterErrorChannel.postMessage(
-                    JSON.stringify({
-                        type: 'jsError',
-                        message: msg,
-                        url: url,
-                        line: line
-                    })
-                );
-                return true; // Prevent default error UI
-            };
-            return true; // Prevent crash
-        };
-
-        window.switchToLayout = function (layout) {
-            cy.layout({ name: layout, animate: true }).run();
-        }
-
-        window.updateGraphData = function (data) {
-            console.log(data);
-            const parsedData = JSON.parse(data);
-
-            const elements = [];
-
-            parsedData.nodes.forEach(node => {
-                elements.push({
-                    data: {
-                        id: node.id,
-                        label: node.labels[0] || "Unnamed Node",
-                        properties: node.properties && typeof node.properties === 'object'
-                            ? { ...node.properties }
-                            : {}
-                    }
-                });
-            });
-
-            parsedData.edges.forEach(edge => {
-                elements.push({
-                    data: {
-                        id: edge.id,
-                        source: edge.source,
-                        target: edge.target,
-                        label: edge.type
-                    }
-                });
-            });
-
-            cy.elements().remove();
-            cy.add(elements);
-            cy.layout({ name: 'cose', animate: true }).run();
-        }
-
-
-    </script>
-</head>
-
-<body>
-    <div id="cy" style="width: 100%; height: 100vh;"></div>
-
-    <script>
         console.log("Update graph data is of type: " + typeof window.updateGraphData);
 
         cy.on('tap', 'node', function (event) {
@@ -196,6 +155,44 @@
             nodes.addClass('highlighted');
 
             // cy.fit(nodes, 50);
+        };
+
+        window.updateGraphData = function (data) {
+            console.log(data);
+            const parsedData = JSON.parse(data);
+
+            const elements = [];
+
+            parsedData.nodes.forEach(node => {
+                elements.push({
+                    data: {
+                        id: node.id,
+                        label: node.labels[0] || "Unnamed Node",
+                        properties: node.properties && typeof node.properties === 'object'
+                            ? { ...node.properties }
+                            : {}
+                    }
+                });
+            });
+
+            parsedData.edges.forEach(edge => {
+                elements.push({
+                    data: {
+                        id: edge.id,
+                        source: edge.source,
+                        target: edge.target,
+                        label: edge.type
+                    }
+                });
+            });
+
+            cy.elements().remove();
+            cy.add(elements);
+            cy.layout({ name: 'cose', animate: true }).run();
+        };
+
+        window.switchToLayout = function (layout) {
+            cy.layout({ name: layout, animate: true }).run();
         };
     </script>
 </body>

@@ -1,116 +1,154 @@
 part of 'investigation_page.dart';
 
 class Tabs extends StatefulWidget {
-  const Tabs({super.key});
+  final Widget Function(int index) tabContentBuilder;
+
+  const Tabs({
+    super.key,
+    required this.tabContentBuilder,
+  });
 
   @override
   State<Tabs> createState() => _TabsState();
 }
 
 class _TabsState extends State<Tabs> with TickerProviderStateMixin {
-  List<String> _tabs = ["Graph 1"];
-  late TabController _tabController;
+  List<String> tabs = ["Graph 1"];
+  late TabController _controller;
   int _tabCount = 1;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: _tabs.length, vsync: this);
+    _controller = TabController(length: tabs.length, vsync: this);
+    _controller.addListener(() {
+      Provider.of<GraphProvider>(context, listen: false)
+          .setTabId(_controller.index);
+    });
   }
 
   @override
   void dispose() {
-    _tabController.dispose();
+    _controller.dispose();
     super.dispose();
   }
 
   void _addNewTab() {
     setState(() {
       _tabCount++;
-      _tabs.add("Graph $_tabCount");
+      tabs.add("Graph $_tabCount");
 
-      _tabController = TabController(
-        length: _tabs.length,
+      _controller.dispose();
+      _controller = TabController(
+        length: tabs.length,
         vsync: this,
-        initialIndex: _tabs.length - 1,
+        initialIndex: tabs.length - 1,
       );
     });
 
-    _loadDataForTab(_tabs.length - 1);
-  }
-
-  void _loadDataForTab(int index) {
-    // String dataUrl = "/assets/web/graph.html"; // Replace with real URLs
-    // _controller.loadRequest(Uri.parse(dataUrl));
-    Provider.of<GraphProvider>(context, listen: false).setTabId(index);
+    Provider.of<GraphProvider>(context, listen: false)
+        .setTabId(tabs.length - 1);
   }
 
   void _renameTab(int index) {
-    TextEditingController textController =
-        TextEditingController(text: _tabs[index]);
-
+    final controller = TextEditingController(text: tabs[index]);
     showDialog(
       context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text("Rename Graph"),
-          content: TextField(
-            controller: textController,
-            autofocus: true,
-            decoration: InputDecoration(hintText: "Enter graph name"),
-          ),
-          actions: [
-            TextButton(
+      builder: (_) => AlertDialog(
+        title: const Text("Rename Graph"),
+        content: TextField(controller: controller),
+        actions: [
+          TextButton(
               onPressed: () => Navigator.pop(context),
-              child: Text("Cancel"),
-            ),
-            TextButton(
-              onPressed: () {
-                setState(() {
-                  _tabs[index] = textController.text.isNotEmpty
-                      ? textController.text
-                      : _tabs[index]; // Keep old name if empty
-                });
-                Navigator.pop(context);
-              },
-              child: Text("Save"),
-            ),
-          ],
-        );
-      },
+              child: const Text("Cancel")),
+          TextButton(
+            child: const Text("Save"),
+            onPressed: () {
+              setState(() {
+                tabs[index] = controller.text.trim().isEmpty
+                    ? tabs[index]
+                    : controller.text.trim();
+              });
+              Navigator.pop(context);
+            },
+          )
+        ],
+      ),
     );
   }
 
   void _deleteTab(int index) {
-    if (_tabs.length == 1) {
-      HapticFeedback.mediumImpact();
+    if (tabs.length == 1) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Cannot delete the last tab!")),
+        const SnackBar(content: Text("Cannot delete the last tab")),
       );
       return;
     }
 
     setState(() {
-      _tabCount--;
-      _tabs.removeAt(index);
+      tabs.removeAt(index);
 
-      _tabController = TabController(
-        length: _tabs.length,
+      _controller.dispose();
+      _controller = TabController(
+        length: tabs.length,
         vsync: this,
-        initialIndex: (_tabs.length - 1).clamp(0, _tabs.length - 1),
+        initialIndex: (index - 1).clamp(0, tabs.length - 1),
       );
     });
+
+    Provider.of<GraphProvider>(context, listen: false)
+        .setTabId(_controller.index);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: TabBar(
+                controller: _controller,
+                isScrollable: true,
+                tabs: List.generate(
+                  tabs.length,
+                  (i) => GestureDetector(
+                    onLongPress: () => _showTabOptions(i),
+                    child: Tab(text: tabs[i]),
+                  ),
+                ),
+              ),
+            ),
+            IconButton(
+              icon: const Icon(Icons.add),
+              onPressed: _addNewTab,
+            )
+          ],
+        ),
+
+        // TabBarView must be INSIDE the same widget
+        Expanded(
+          child: TabBarView(
+            controller: _controller,
+            children: List.generate(
+              tabs.length,
+              (i) => widget.tabContentBuilder(i),
+            ),
+          ),
+        ),
+      ],
+    );
   }
 
   void _showTabOptions(int index) {
     showMenu(
       context: context,
-      position: RelativeRect.fromLTRB(100, 100, 0, 0),
+      position: const RelativeRect.fromLTRB(100, 100, 0, 0),
       items: [
         PopupMenuItem(
           child: ListTile(
-            leading: Icon(Icons.edit),
-            title: Text("Rename"),
+            leading: const Icon(Icons.edit),
+            title: const Text("Rename"),
             onTap: () {
               Navigator.pop(context);
               _renameTab(index);
@@ -119,8 +157,8 @@ class _TabsState extends State<Tabs> with TickerProviderStateMixin {
         ),
         PopupMenuItem(
           child: ListTile(
-            leading: Icon(Icons.delete),
-            title: Text("Delete"),
+            leading: const Icon(Icons.delete),
+            title: const Text("Delete"),
             onTap: () {
               Navigator.pop(context);
               _deleteTab(index);
@@ -130,36 +168,92 @@ class _TabsState extends State<Tabs> with TickerProviderStateMixin {
       ],
     );
   }
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: TabBar(
-              controller: _tabController,
-              isScrollable: true,
-              
-              // indicatorSize: TabBarIndicatorSize.tab,
-              tabs: _tabs.map((name) {
-                int index = _tabs.indexOf(name);
-                return GestureDetector(
-                  onLongPress: () => _showTabOptions(index),
-                  child: Tab(text: name),
-                );
-              }).toList(),
-              onTap: (index) => _loadDataForTab(index),
-            ),
-          ),
-        ),
-        IconButton(
-          icon: Icon(Icons.add),
-          onPressed: _addNewTab,
-          tooltip: "New Graph",
-        ),
-      ],
-    );
-  }
 }
+
+
+// Tools(
+//               tools: [
+//                 ToolItem(
+//                     icon: Icons.search,
+//                     onPressed: () => toggleFilterPanel(context),
+//                     tooltip: "Search"),
+//                 ToolItem(
+//                     icon: Icons.table_chart,
+//                     onPressed: () => isTableViewMode(),
+//                     tooltip: "Table View"),
+//                 ToolItem(
+//                   icon: Icons.map,
+//                   onPressed: _toggleMapMode,
+//                   tooltip: "Zen Mode",
+//                 ),
+//                 ToolItem(
+//                   icon: Icons.select_all,
+//                   onPressed: _toggleSelectMode,
+//                   tooltip: isModeSelection ? "Panning mode" : "Selection mode",
+//                 ),
+//                 ToolItem(
+//                   icon: Icons.refresh,
+//                   onPressed: () async {
+//                     // final response = await _fetchGraphData();
+//                     // _setGraphProvider(context, response);
+//                     // _controller.reload();
+//                   },
+//                   tooltip: "Refresh graph",
+//                 ),
+//                 ToolItem(
+//                   icon: Icons.add,
+//                   onPressed: () => Navigator.of(context).pushNamed("/addNode"),
+//                   tooltip: "Add node",
+//                 ),
+//                 ToolItem(
+//                   icon: Icons.arrow_circle_right_outlined,
+//                   onPressed: () {
+//                     throw new Exception();
+//                   },
+//                   tooltip: "Create edges",
+//                 ),
+//                 ToolItem(
+//                   icon: Icons.undo,
+//                   onPressed: () {},
+//                   tooltip: "Undo",
+//                 ),
+//                 ToolItem(
+//                   icon: Icons.redo,
+//                   onPressed: () {},
+//                   tooltip: "Redo",
+//                 ),
+//                 ToolItem(
+//                   icon: Icons.clear,
+//                   onPressed: _deleteAllNodes,
+//                   tooltip: "Delete all nodes",
+//                 ),
+//               ],
+//               toolDropdowns: [
+//                 ToolDropdown(name: "Graph layout", dropDownItems: [
+//                   ToolItem(
+//                       icon: Icons.graphic_eq,
+//                       onPressed: () => changeLayout('cose'),
+//                       tooltip: "Normal Graph View"),
+//                   ToolItem(
+//                       icon: Icons.hub,
+//                       onPressed: () => changeLayout('breadthfirst'),
+//                       tooltip: "Hierarchical Graph View"),
+//                   ToolItem(
+//                       icon: Icons.shuffle,
+//                       onPressed: () => changeLayout('random'),
+//                       tooltip: "Random"),
+//                   ToolItem(
+//                       icon: Icons.grid_3x3,
+//                       onPressed: () => changeLayout('grid'),
+//                       tooltip: "Grid"),
+//                   ToolItem(
+//                       icon: Icons.circle,
+//                       onPressed: () => changeLayout('circle'),
+//                       tooltip: "Circle"),
+//                   ToolItem(
+//                       icon: Icons.circle,
+//                       onPressed: () => changeLayout('concentric'),
+//                       tooltip: "Concentric"),
+//                 ])
+//               ],
+//             ),

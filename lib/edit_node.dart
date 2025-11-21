@@ -55,7 +55,6 @@ class _EditNodePageState extends State<EditNodePage> {
   }
 
   void _submitNodes() async {
-    int id = 1;
     final String url = "$FASTAPI_URL/add-record";
     List<Map<String, dynamic>> nodeData = [];
     for (final key in nodeKeys) {
