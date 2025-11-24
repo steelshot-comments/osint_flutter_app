@@ -1,4 +1,4 @@
-part of 'investigation_page.dart';
+part of '../investigation_page.dart';
 
 class TableView extends StatefulWidget {
   const TableView({super.key});

@@ -1,7 +1,7 @@
 import 'dart:io';
 
 import 'package:knotwork/components/button.dart';
-import 'package:knotwork/projects/graph/graph_provider.dart';
+import 'package:knotwork/providers/graph/graph_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:file_picker/file_picker.dart';

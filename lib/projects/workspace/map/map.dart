@@ -3,14 +3,14 @@ import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:flutter/services.dart';
 
-class MapScreen extends StatefulWidget {
-  const MapScreen({super.key});
+class MapView extends StatefulWidget {
+  const MapView({super.key});
 
   @override
-  State<MapScreen> createState() => _MapScreenState();
+  State<MapView> createState() => _MapViewState();
 }
 
-class _MapScreenState extends State<MapScreen> {
+class _MapViewState extends State<MapView> {
   late MapboxMap mapboxMap;
   PointAnnotationManager? pointAnnotationManager;
   bool isAddingMarker = false;

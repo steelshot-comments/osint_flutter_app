@@ -1,4 +1,3 @@
-import 'package:knotwork/map/map.dart';
 import 'package:knotwork/projects/projects_page.dart';
 import 'package:knotwork/settings_page.dart';
 import 'package:knotwork/actions_timeline.dart';
@@ -39,8 +38,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       body: <Widget>[
         ProjectPage(),
-        // TimelinesPage(),
-        MapScreen(),
+        TimelinesPage(),
         SettingsPage(),
       ][currentPageIndex],
     );

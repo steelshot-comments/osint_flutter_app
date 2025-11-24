@@ -83,7 +83,7 @@ class SquircleButton extends StatelessWidget {
     return Material(
       color: Colors.transparent,
       elevation: elevation,
-      shadowColor: shadowColor ?? Colors.black.withAlpha(76),
+      shadowColor: shadowColor ?? Colors.transparent,
       borderRadius: BorderRadius.circular(10),
       child: GestureDetector(
         onTap: onTap,

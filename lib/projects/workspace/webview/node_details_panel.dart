@@ -1,4 +1,4 @@
-part of 'investigation_page.dart';
+part of '../investigation_page.dart';
 
 class NodeDetailsPanel extends StatefulWidget {
   final Map<String, dynamic> nodeDetails;
@@ -15,7 +15,7 @@ class _NodeDetailsPanelState extends State<NodeDetailsPanel> {
   bool isMinimized = false;
 
   void _deleteNode() async {
-    await Dio().delete("$NEO4J_API_URL/delete-node/${widget.nodeDetails["id"]}");
+    await Dio().delete("$neo4j_api_url/delete-node/${widget.nodeDetails["id"]}");
 
     widget.onClose();
   }
@@ -39,7 +39,7 @@ class _NodeDetailsPanelState extends State<NodeDetailsPanel> {
   }
 
   void _cloneNode() async {
-    await Dio().put("$NEO4J_API_URL/clone-node",
+    await Dio().put("$neo4j_api_url/clone-node",
         data: {"id": widget.nodeDetails["id"]});
     widget.onClose();
   }

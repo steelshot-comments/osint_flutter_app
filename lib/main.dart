@@ -1,8 +1,8 @@
 import 'package:knotwork/add_node.dart';
-import 'package:knotwork/projects/graph/graph_provider.dart';
+import 'package:knotwork/providers/graph/graph_provider.dart';
 import 'package:knotwork/home_screen.dart';
 import 'package:knotwork/policies_page.dart';
-import 'package:knotwork/projects/graph/investigation_page.dart';
+import 'package:knotwork/projects/workspace/investigation_page.dart';
 import 'package:knotwork/providers/api_provider.dart';
 import 'package:knotwork/providers/theme_provider.dart';
 import 'package:knotwork/settings_page.dart';
@@ -77,9 +77,9 @@ class _MainAppState extends State<MainApp> {
   @override
   void initState() {
     super.initState();
-    Future.microtask(() {
-      Provider.of<GraphProvider>(context, listen: false).fetchActionMap();
-    });
+    // Future.microtask(() {
+    //   Provider.of<GraphProvider>(context, listen: false).fetchActionMap();
+    // });
   }
 
   @override
