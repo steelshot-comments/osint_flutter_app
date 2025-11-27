@@ -10,7 +10,6 @@ class WebView extends StatefulWidget {
 class _WebViewState extends State<WebView> {
   Map<String, dynamic>? selectedNode;
   late final WebViewController _controller = WebViewController();
-  late GraphProvider graphProvider;
 
   void onMessage(JavaScriptMessage message) {
     Map<String, dynamic> nodeData =
@@ -40,12 +39,16 @@ class _WebViewState extends State<WebView> {
 
   @override
   Widget build(BuildContext context) {
-  graphProvider = Provider.of<GraphProvider>(context, listen: false);
+    final graphProvider = Provider.of<GraphProvider>(context, listen: false);
 
     return CustomWebView(
       assetUrl: 'assets/web/graph.html',
       onMessage: onMessage,
       controller: _controller,
+      data: {
+        'nodes': graphProvider.nodes,
+        'edges': graphProvider.edges,
+      },
     );
   }
 }

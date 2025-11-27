@@ -2,10 +2,12 @@ part of 'investigation_page.dart';
 
 class Tabs extends StatefulWidget {
   final Widget Function(int index) tabContentBuilder;
+  final ValueChanged<int>? onTabChanged;
 
   const Tabs({
     super.key,
     required this.tabContentBuilder,
+    this.onTabChanged,
   });
 
   @override
@@ -20,11 +22,22 @@ class _TabsState extends State<Tabs> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
-    _controller = TabController(length: tabs.length, vsync: this);
-    _controller.addListener(() {
-      Provider.of<GraphProvider>(context, listen: false)
-          .setTabId(_controller.index);
-    });
+    _initController(0);
+  }
+
+  void _initController(int initialIndex) {
+    _controller = TabController(
+      length: tabs.length,
+      vsync: this,
+      initialIndex: initialIndex,
+    );
+    _controller.addListener(_handleTabSelection);
+  }
+
+  void _handleTabSelection() {
+    if (_controller.indexIsChanging) {
+      widget.onTabChanged?.call(_controller.index);
+    }
   }
 
   @override
@@ -39,15 +52,11 @@ class _TabsState extends State<Tabs> with TickerProviderStateMixin {
       tabs.add("Graph $_tabCount");
 
       _controller.dispose();
-      _controller = TabController(
-        length: tabs.length,
-        vsync: this,
-        initialIndex: tabs.length - 1,
-      );
+      _initController(tabs.length - 1);
     });
 
-    Provider.of<GraphProvider>(context, listen: false)
-        .setTabId(tabs.length - 1);
+    // Provider.of<GraphProvider>(context, listen: false)
+    //     .setTabId(tabs.length - 1);
   }
 
   void _renameTab(int index) {
@@ -89,15 +98,11 @@ class _TabsState extends State<Tabs> with TickerProviderStateMixin {
       tabs.removeAt(index);
 
       _controller.dispose();
-      _controller = TabController(
-        length: tabs.length,
-        vsync: this,
-        initialIndex: (index - 1).clamp(0, tabs.length - 1),
-      );
+      _initController((index - 1).clamp(0, tabs.length - 1));
     });
 
-    Provider.of<GraphProvider>(context, listen: false)
-        .setTabId(_controller.index);
+    // Provider.of<GraphProvider>(context, listen: false)
+    //     .setTabId(_controller.index);
   }
 
   @override

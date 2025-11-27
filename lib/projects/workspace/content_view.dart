@@ -10,11 +10,40 @@ class ContentView extends StatefulWidget {
 }
 
 class _ContentViewState extends State<ContentView> {
-  late GraphProvider graphProvider;
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _updateActiveView();
+    });
+  }
 
-  Widget _buildErrorDialog() {
+  @override
+  void didUpdateWidget(ContentView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.selectedIndex != oldWidget.selectedIndex) {
+      _updateActiveView();
+    }
+  }
+
+  void _updateActiveView() {
+    final webviews = Provider.of<WebViewProvider>(context, listen: false);
+    switch (widget.selectedIndex) {
+      case 0:
+        webviews.switchActiveView("graph");
+        break;
+      case 1:
+        webviews.switchActiveView("map");
+        break;
+      case 2:
+        webviews.switchActiveView("table");
+        break;
+    }
+  }
+
+  Widget _buildErrorDialog(GraphProvider graphProvider) {
     return Padding(
-      padding: EdgeInsetsGeometry.only(left: 16, right: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -23,18 +52,16 @@ class _ContentViewState extends State<ContentView> {
             style: TextStyle(fontSize: 18),
           ),
           Row(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               TextButton(
-                onPressed: () => {
-                  graphProvider.setLoading(true),
-                  graphProvider.fetchAndSetProvider()
-                },
-                child: Text("Try again"),
+                onPressed: () => graphProvider.loadGraph(),
+                child: const Text("Try again"),
               ),
               TextButton(
                 onPressed: () =>
-                    {Navigator.of(context).pushReplacementNamed('/home')},
-                child: Text("Go back"),
+                    Navigator.of(context).pushReplacementNamed('/home'),
+                child: const Text("Go back"),
               )
             ],
           )
@@ -45,35 +72,31 @@ class _ContentViewState extends State<ContentView> {
 
   @override
   Widget build(BuildContext context) {
-    graphProvider = Provider.of<GraphProvider>(context, listen: false);
-    final webviews = Provider.of<WebViewProvider>(context);
-    int selectedIndex = widget.selectedIndex;
-
     return Expanded(
       child: Tabs(
+        onTabChanged: (index) {
+          // Handle tab change if needed, e.g. update provider
+        },
         tabContentBuilder: (index) {
           return Stack(
             children: [
-              Positioned.fill(child: Builder(
-                builder: (context) {
-                  if (graphProvider.isLoading) {
-                    return Center(child: CircularProgressIndicator());
-                  } else if (graphProvider.hasData) {
-                    switch (selectedIndex) {
+              Positioned.fill(child: Consumer<GraphProvider>(
+                builder: (context, graphProvider, child) {
+                  if (graphProvider.graphStatus == ViewStatus.loading) {
+                    return const Center(child: CircularProgressIndicator());
+                  } else if (graphProvider.graphStatus == ViewStatus.loaded) {
+                    switch (widget.selectedIndex) {
                       case 0:
-                        webviews.switchActiveView("graph");
                         return WebView();
                       case 1:
-                        webviews.switchActiveView("map");
                         return MapView();
                       case 2:
-                        webviews.switchActiveView("table");
                         return TableView();
                       default:
-                        return Center(child: Text("Error"));
+                        return const Center(child: Text("Error"));
                     }
                   } else {
-                    return _buildErrorDialog();
+                    return _buildErrorDialog(graphProvider);
                   }
                 },
               )),

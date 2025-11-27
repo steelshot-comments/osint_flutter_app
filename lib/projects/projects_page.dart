@@ -27,7 +27,7 @@ class _ProjectPageState extends State<ProjectPage> {
 
     try {
       final response = await _dio.get(
-        '$auth_api_url/projects',
+        '$auth_api_url/projects/',
         data: {"userID": 4},
       );
 
@@ -58,7 +58,7 @@ class _ProjectPageState extends State<ProjectPage> {
   Future<void> _createProject(String name, String description) async {
     try {
       final response = await _dio.post(
-        '$auth_api_url/add-project',
+        '$auth_api_url/projects/add',
         data: {
           "userID": 4,
           "username": "Yeshaya",
@@ -129,14 +129,14 @@ class _ProjectPageState extends State<ProjectPage> {
 
   Future<void> _deleteProject(int projectID)async{
     try{
-      final response = await _dio.post('$auth_api_url/delete-project', data: {'projectID': projectID});
+      final response = await _dio.post('$auth_api_url/projects/delete', data: {'projectID': projectID});
       if (response.statusCode == 200) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Project deleted successfully")),
         );
         await _fetchProjects();
       } else {
-        throw Exception("Failed to create project");
+        throw Exception("Failed to delete project");
       }
     }
     catch (e) {
@@ -187,7 +187,7 @@ class _ProjectPageState extends State<ProjectPage> {
                         final project = projects[index];
 
                         return Card(
-                          color: const Color(0xFF1E1E1E),
+                          color: theme.colorScheme.secondaryContainer,
                           child: InkWell(
                             onTap: () {
                               Navigator.of(context).pushNamed('/investigation');
@@ -202,7 +202,7 @@ class _ProjectPageState extends State<ProjectPage> {
                                     style: const TextStyle(
                                       fontSize: 18,
                                       fontWeight: FontWeight.w600,
-                                      color: Colors.white,
+                                      // color: Colors.white,
                                     ),
                                   ),
                                   const SizedBox(height: 8),
@@ -214,8 +214,8 @@ class _ProjectPageState extends State<ProjectPage> {
                                   const SizedBox(height: 8),
                                   Text(
                                     'Created: ${project['created_at'] ?? 'N/A'}',
-                                    style: const TextStyle(
-                                        color: Colors.grey, fontSize: 12),
+                                    style: TextStyle(
+                                        color: theme.colorScheme.secondary, fontSize: 12),
                                   ),
                                   const Spacer(),
                                   Row(

@@ -1,270 +1,242 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:knotwork/auth/auth_screen.dart';
+
 part 'classes.dart';
 
 final PRODUCTION_FASTAPI_URL = dotenv.env['PRODUCTION_FASTAPI_URL'];
 final FASTAPI_URL = dotenv.env['FASTAPI_URL'];
+final NEO4J_API_URL = dotenv.env['NEO4J_API_URL'];
 
-enum GraphStatus { idle, loading, loaded, error }
+enum ViewStatus { idle, loading, loaded, error }
 
-final neo4j_api_url = dotenv.env['NEO4J_API_URL'];
-final Dio dio = Dio()
-  ..interceptors.add(LogInterceptor(responseBody: true, requestBody: true));
+class GraphProvider with ChangeNotifier {
+  /// ----- VIEW STATES -----
+  ViewStatus tableStatus = ViewStatus.idle;
+  ViewStatus graphStatus = ViewStatus.idle;
+  ViewStatus hierarchyStatus = ViewStatus.idle;
 
-class GraphProvider extends ChangeNotifier {
+  /// Current UI layout/view type (Table / Graph / Hierarchy)
+  String currentView = "table";
 
-  // declaration
-  List<Map<String, dynamic>> _nodes = [];
-  List<String> _nodeLabels = [];
-  List<Map<String, dynamic>> _edges = [];
-  List<String> _edgeLabels = [];
-  final Map<String, Color> _labelColors = {
-    "Person": Colors.blue,
-    "Trafficker": Colors.red,
-    "Victim": Colors.yellow,
-    "Client": Colors.teal,
-    "Phone number": Colors.pink,
-    "Transcation": Colors.brown,
-  };
-  final Map<String, List<Map<String, String>>> _actionMap = {};
-  bool _hasFetchedOnce = false;
-  int _tab_id = 1;
+  /// ----- DATA -----
+  List<Node> nodes = [];
+  List<Edge> edges = [];
 
-  // states
-  bool _isMapMode = false;
-  bool _isTableView = false;
-  bool _isModeSelection = false;
-  bool _filterPanelVisible = false;
-  bool _isLoading = false;
-  bool _hasData = false;
-
-  // getters
-
-  bool get hasFetchedOnce => _hasFetchedOnce;
-  List<Map<String, dynamic>> get nodes => _nodes;
-  List<String> get nodeLabels => _nodeLabels;
-  List<Map<String, dynamic>> get edges => _edges;
-  List<String> get edgeLabels => _edgeLabels;
-  Map<String, Color> get labelColors => _labelColors;
-  int get getTabId => _tab_id;
-  bool get isMapMode => _isMapMode;
-  bool get isTableView => _isTableView;
-  bool get isModeSelection => _isModeSelection;
-  bool get isFilterPanelVisible => _filterPanelVisible;
-  bool get isLoading => _isLoading;
-  bool get hasData => _hasData;
-
-  // setters
-
-  void toggleMapMode() {
-    _isMapMode = !isMapMode;
+  List<String> get nodeLabels {
+    final set = <String>{};
+    for (final n in nodes) {
+      set.addAll(n.labels);
+    }
+    return set.toList();
   }
 
-  void toggleTableView() {
-    _isTableView = !isTableView;
+  /// Unique edge labels (relationship types)
+  List<String> get edgeLabels {
+    final set = <String>{};
+    for (final e in edges) {
+      if (e.label != null) {
+        set.add(e.label!);
+      }
+    }
+    return set.toList();
   }
 
-  void toggleModeSelection() {
-    _isModeSelection = !isModeSelection;
+  /// Selection
+  bool _selectionMode = false;
+  Set<String> selectedNodeIds = {}; // store by node id
+
+  bool get isSelectionMode => _selectionMode;
+  List<Node> get selectedNodes =>
+      nodes.where((n) => selectedNodeIds.contains(n.id)).toList();
+
+  /// Toggle selection mode
+  void toggleSelectionMode() {
+    _selectionMode = !_selectionMode;
+
+    if (!_selectionMode) {
+      selectedNodeIds.clear();
+    }
+
+    notifyListeners();
   }
 
+  // toggle filter panel
+  bool _isFilterPanelVisible = false;
+  bool get isFilterPanelVisible => _isFilterPanelVisible;
   void toggleFilterPanelVisible() {
-    _filterPanelVisible = !isFilterPanelVisible;
-  }
-
-  void setLoading(bool value) {
-    _isLoading = !isLoading;
-  }
-
-  void setData(bool value) {
-    _hasData = !hasData;
-  }
-
-  void setTabId(int id) {
-    _tab_id = id;
-  }
-
-  void setGraphData(
-      List<Map<String, dynamic>> nodes, List<Map<String, dynamic>> edges) {
-    _nodes = nodes;
-    _edges = edges;
-    setLabels(nodes, edges);
-    _assignColorsToLabels();
+    _isFilterPanelVisible = !_isFilterPanelVisible;
     notifyListeners();
   }
 
-  void addNodes(List<Map<String, dynamic>> nodes) {
-    _nodes.addAll(nodes);
+  // toggle zen mode
+  bool _isZenMode = false;
+  bool get isZenMode => _isZenMode;
+  void toggleZenMode() {
+    _isZenMode = !_isZenMode;
+    notifyListeners();
   }
 
-  // remove nodes from graph
-  void removeNodes(List<String> ids) {
-    for (var id in ids) {
-      _nodes.removeWhere((node) => node['id'] == id);
-      _edges
-          .removeWhere((edge) => edge['source'] == id || edge['target'] == id);
+  /// Mapping labels → color
+  Map<String, Color> labelColors = {};
+
+  /// Filters
+  String searchQuery = "";
+  Map<String, dynamic> propertyFilters = {};
+
+  /// Http client
+  final dio = Dio();
+
+  /// ----- SWITCH VIEW -----
+  void switchTo(String view) {
+    currentView = view;
+    notifyListeners();
+  }
+
+  /// ----- LOAD DATA -----
+  Future<void> loadGraph() async {
+    graphStatus = ViewStatus.loading;
+    notifyListeners();
+
+    try {
+      final res = await dio.get("$NEO4J_API_URL/graph", data: {
+        "user_id": "550e8400-e29b-41d4-a716-446655440000",
+        "graph_id": "550e8400-e29b-41d4-a716-446655440000",
+        "project_id": "550e8400-e29b-41d4-a716-446655440000",
+      });
+
+      nodes = parseNodes(res.data["nodes"]);
+      edges = parseEdges(res.data["edges"]);
+
+      generateLabelColors();
+
+      graphStatus = ViewStatus.loaded;
+    } catch (e) {
+      graphStatus = ViewStatus.error;
     }
 
     notifyListeners();
   }
 
-  void setLabels(
-      List<Map<String, dynamic>> nodes, List<Map<String, dynamic>> edges) {
-    for (var node in nodes) {
-      // print(node);
-      for (var label in node['labels'] ?? []) {
-        if (!_nodeLabels.contains(label)) {
-          _nodeLabels.add(label);
-        }
+  // get actions for a given label
+  Map<String, String> getActionsForLabel(String label) {
+    final response = dio.get("$AUTH_API_URL/action-map");
+    final actionMap = <String, String>{};
+    response.then((res) {
+      final data = res.data as Map<String, dynamic>;
+      if (data.containsKey(label)) {
+        data[label].forEach((key, value) {
+          actionMap[key] = value;
+        });
       }
-    }
-    notifyListeners();
+    }).catchError((error) {
+      debugPrint("Error fetching action map: $error");
+    });
+    return actionMap;
   }
 
-  void _assignColorsToLabels() {
-    final availableColors = [
-      Colors.blue,
-      Colors.green,
-      Colors.red,
-      Colors.orange,
-      Colors.purple,
-      Colors.teal,
-      Colors.indigo,
-      Colors.brown,
-      Colors.pink,
-      Colors.cyan,
-      Colors.amber,
-      Colors.lime,
-      Colors.lightBlue,
-      Colors.lightGreen,
-      Colors.deepOrange,
-      Colors.deepPurple,
-      Colors.blueGrey,
-      Colors.grey,
-      Colors.yellow,
-    ];
-
-    int colorIndex = 0;
-    for (var node in _nodes) {
-      for (var label in node['labels'] ?? []) {
-        if (!_labelColors.containsKey(label)) {
-          _labelColors[label] =
-              availableColors[colorIndex % availableColors.length];
-          colorIndex++;
-        }
-      }
-    }
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      "nodes": nodes,
-      "edges": edges,
-    };
-  }
-
+  // get nodes grouped by label
   Map<String, List<Map<String, dynamic>>> getNodesGroupedByLabel() {
-    Map<String, List<Map<String, dynamic>>> groupedNodes = {};
+    final Map<String, List<Map<String, dynamic>>> groupedNodes = {};
 
-    for (var node in _nodes) {
-      List<String> labels = node['labels'] is List<dynamic>
-          ? List<String>.from(node['labels'])
-          : [];
-
-      if (labels.isEmpty) {
-        labels = ['Uncategorized'];
+    for (final node in nodes) {
+      final label = node.labels.isNotEmpty ? node.labels[0] : 'Unknown';
+      if (!groupedNodes.containsKey(label)) {
+        groupedNodes[label] = [];
       }
-
-      for (var label in labels) {
-        groupedNodes.putIfAbsent(label, () => []).add(node);
-      }
+      groupedNodes[label]!.add({
+        'id': node.id,
+        'properties': node.properties,
+      });
     }
 
     return groupedNodes;
   }
 
-  List<Map<String, String>>? getActionsForLabel(String label) {
-    return _actionMap[label];
+  /// ----- DELETE EVERYTHING -----
+  Future<void> deleteAllNodes() async {
+    try {
+      await dio.delete("$NEO4J_API_URL/delete_all");
+
+      nodes.clear();
+      edges.clear();
+      selectedNodeIds.clear();
+
+      notifyListeners();
+    } catch (e) {
+      print("Delete error: $e");
+    }
   }
 
-  Future<void> fetchActionMap() async {
-    final response = await dio.get("$FASTAPI_URL/action-map");
-    final data = Map<String, dynamic>.from(response.data);
-    // print("----------------- $data -----------------------");
-    _actionMap.clear();
-    data.forEach((key, value) {
-      _actionMap[key] = List<Map<String, String>>.from(
-        (value as List).map((e) => Map<String, String>.from(e)),
-      );
-    });
+  Future<void> loadTable() async {
+    tableStatus = ViewStatus.loading;
+    notifyListeners();
+
+    try {
+      final res = await dio.get("$NEO4J_API_URL/nodes");
+      nodes = parseNodes(res.data);
+      tableStatus = ViewStatus.loaded;
+      switchTo("table");
+    } catch (e) {
+      tableStatus = ViewStatus.error;
+    }
+
     notifyListeners();
   }
 
-  void fetchAndSetProvider() async {
-    final response = await _fetchGraphData();
-    _setGraphProvider(response);
+  Future<void> loadHierarchy() async {
+    hierarchyStatus = ViewStatus.loading;
+    notifyListeners();
+
+    try {
+      final res = await dio.get("$NEO4J_API_URL/hierarchy");
+
+      nodes = parseNodes(res.data["nodes"]);
+      edges = parseEdges(res.data["edges"]);
+
+      hierarchyStatus = ViewStatus.loaded;
+    } catch (e) {
+      hierarchyStatus = ViewStatus.error;
+    }
+
+    notifyListeners();
   }
 
-  Future<Response> _fetchGraphData() async {
-    try {
-      final response = await dio.post('$neo4j_api_url/graph',
-          options: Options(
-            headers: {"Content-Type": "application/json"},
-          ),
-          data: {
-            "user_id": "550e8400-e29b-41d4-a716-446655440000",
-            "project_id": "550e8400-e29b-41d4-a716-446655440000",
-            "graph_id": "550e8400-e29b-41d4-a716-446655440000",
-          });
-      return response;
-    } catch (e) {
-      setLoading(false);
-      throw Error();
+  /// ----- COLOR ASSIGNMENT -----
+  void generateLabelColors() {
+    labelColors.clear();
+    final uniqueLabels = nodes.map((n) => n.labels[0]).toSet().toList();
+
+    for (var i = 0; i < uniqueLabels.length; i++) {
+      labelColors[uniqueLabels[i]] =
+          Colors.primaries[i % Colors.primaries.length];
     }
   }
 
-  void _setGraphProvider(Response response) async {
-    if (response.statusCode == 200) {
-      final Map<String, dynamic> data = response.data;
+  /// ----- FILTERING -----
+  void setSearchQuery(String value) {
+    searchQuery = value;
+    notifyListeners();
+  }
 
-      if (data['nodes'] is List && data['edges'] is List) {
-        // Safely cast the lists
-        List<Map<String, dynamic>> nodes = (data['nodes'] as List)
-            .map((e) => Map<String, dynamic>.from(e))
-            .toList();
-        List<Map<String, dynamic>> edges = (data['edges'] as List)
-            .map((e) => Map<String, dynamic>.from(e))
-            .toList();
-        // print(edges);
-        setGraphData(nodes, edges);
-        setLabels(nodes, edges);
+  void updatePropertyFilter(String key, dynamic value) {
+    propertyFilters[key] = value;
+    notifyListeners();
+  }
 
-        setData(true);
-        setLoading(false);
-      } else {
-        // ScaffoldMessenger.of(context).showSnackBar(
-        //   SnackBar(
-        //     content:
-        //         Text("Invalid response structure: Missing 'nodes' or 'edges'"),
-        //   ),
-        // );
+  List<Node> get filteredNodes {
+    return nodes.where((n) {
+      if (searchQuery.isNotEmpty &&
+          !n.labels[0].toLowerCase().contains(searchQuery.toLowerCase())) {
+        return false;
       }
-    } else {
-      debugPrint("Failed to fetch graph data: ${response.statusCode}");
-    }
-  }
 
-  Future<String> deleteAllNodes() async {
-    try {
-      final response = await dio.delete("$neo4j_api_url/delete-all-nodes",
-          data: {"user_id": 1, "project_id": "1", "graph_id": ""});
-      return "success";
-    } catch (e) {
-      return "$e";
-      // ScaffoldMessenger.of(context).showSnackBar(
-      //   SnackBar(content: Text("Error: $e")),
-      // );
-    }
+      for (final entry in propertyFilters.entries) {
+        if (n.properties[entry.key] != entry.value) return false;
+      }
+
+      return true;
+    }).toList();
   }
 }

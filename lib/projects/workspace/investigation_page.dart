@@ -36,8 +36,15 @@ class _InvestigationPageState extends State<InvestigationPage> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      graphProvider.fetchAndSetProvider();
+      graphProvider.loadGraph();
     });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    graphProvider = Provider.of<GraphProvider>(context, listen: false);
+    webViewProvider = Provider.of<WebViewProvider>(context, listen: false);
   }
 
   Widget _buildTools() {
@@ -49,23 +56,23 @@ class _InvestigationPageState extends State<InvestigationPage> {
             tooltip: "Search"),
         ToolItem(
             icon: Icons.table_chart,
-            onPressed: graphProvider.toggleTableView,
+            onPressed: graphProvider.loadTable,
             tooltip: "Table View"),
         ToolItem(
           icon: Icons.map,
-          onPressed: graphProvider.toggleMapMode,
+          onPressed: graphProvider.toggleZenMode,
           tooltip: "Zen Mode",
         ),
         ToolItem(
           icon: Icons.select_all,
-          onPressed: graphProvider.toggleModeSelection,
+          onPressed: graphProvider.toggleSelectionMode,
           tooltip:
-              graphProvider.isModeSelection ? "Panning mode" : "Selection mode",
+              graphProvider.isSelectionMode ? "Panning mode" : "Selection mode",
         ),
         ToolItem(
           icon: Icons.refresh,
           onPressed: () async {
-            graphProvider.fetchAndSetProvider();
+            graphProvider.loadGraph();
           },
           tooltip: "Refresh graph",
         ),
@@ -77,7 +84,9 @@ class _InvestigationPageState extends State<InvestigationPage> {
         ToolItem(
           icon: Icons.arrow_circle_right_outlined,
           onPressed: () {
-            throw new Exception();
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text("Create edges not implemented yet")),
+            );
           },
           tooltip: "Create edges",
         ),
@@ -130,23 +139,13 @@ class _InvestigationPageState extends State<InvestigationPage> {
 
   @override
   Widget build(BuildContext context) {
-    graphProvider = Provider.of<GraphProvider>(context, listen: false);
-    webViewProvider = Provider.of<WebViewProvider>(context, listen: false);
-
     return Scaffold(
-      appBar: (graphProvider.isMapMode ||
-              graphProvider.isLoading ||
-              !graphProvider.hasData)
-          ? null
-          : AppBar(
-              automaticallyImplyLeading: false,
-              title: MyMenuBar(),
-            ),
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        title: const MyMenuBar(),
+      ),
       body: Column(
-        children: [
-          ContentView(selectedIndex: 0),
-          if (!graphProvider.isLoading && graphProvider.hasData) _buildTools()
-        ],
+        children: [const ContentView(selectedIndex: 0), _buildTools()],
       ),
     );
   }

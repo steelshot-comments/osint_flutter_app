@@ -16,7 +16,7 @@ class _TableViewState extends State<TableView> with AutomaticKeepAliveClientMixi
     super.build(context);
     final graphData = Provider.of<GraphProvider>(context);
     final groupedNodes = graphData.getNodesGroupedByLabel();
-    final List<Map<String, dynamic>> relationships = graphData.edges;
+    // final List<String> relationships = graphData.edgeLabels;
 
     return ListView(
       children: groupedNodes.entries.map((entry) {

@@ -23,6 +23,19 @@ class _ToolsState extends State<Tools> {
   @override
   void initState() {
     super.initState();
+    _updateTools();
+  }
+
+  @override
+  void didUpdateWidget(Tools oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.tools != oldWidget.tools ||
+        widget.toolDropdowns != oldWidget.toolDropdowns) {
+      _updateTools();
+    }
+  }
+
+  void _updateTools() {
     _allTools = [...widget.tools, ...widget.toolDropdowns];
   }
 

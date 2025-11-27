@@ -15,7 +15,7 @@ class _NodeDetailsPanelState extends State<NodeDetailsPanel> {
   bool isMinimized = false;
 
   void _deleteNode() async {
-    await Dio().delete("$neo4j_api_url/delete-node/${widget.nodeDetails["id"]}");
+    await Dio().delete("$NEO4J_API_URL/delete-node/${widget.nodeDetails["id"]}");
 
     widget.onClose();
   }
@@ -39,7 +39,7 @@ class _NodeDetailsPanelState extends State<NodeDetailsPanel> {
   }
 
   void _cloneNode() async {
-    await Dio().put("$neo4j_api_url/clone-node",
+    await Dio().put("$NEO4J_API_URL/clone-node",
         data: {"id": widget.nodeDetails["id"]});
     widget.onClose();
   }
