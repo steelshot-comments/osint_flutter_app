@@ -1,4 +1,4 @@
-import 'package:knotwork/components/button.dart';
+import 'package:knotwork/components/squircle_button.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';

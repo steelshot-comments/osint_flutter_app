@@ -25,7 +25,7 @@ dependencies:
   provider: ^6.1.2
   shared_preferences: ^2.5.2
   web_socket_channel: ^3.0.2
-  webview_all: ^0.5.2
+  # webview_all: ^0.5.2
   mapbox_maps_flutter: ^2.0.0
   flutter_speed_dial: ^7.0.0
   webview_flutter: ^4.13.0
@@ -38,6 +38,7 @@ dev_dependencies:
   flutter_lints: ^5.0.0
   integration_test:
     sdk: flutter
+  mocktail: ^1.0.0
 
 flutter:
   uses-material-design: true

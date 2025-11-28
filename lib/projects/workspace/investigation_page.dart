@@ -2,7 +2,7 @@ import 'dart:convert';
 
 import 'package:knotwork/edit_node.dart';
 import 'package:dio/dio.dart';
-import 'package:knotwork/components/button.dart';
+import 'package:knotwork/components/squircle_button.dart';
 import 'package:knotwork/components/transform_button.dart';
 import 'package:knotwork/projects/workspace/webview/custom_webview.dart';
 import 'package:knotwork/projects/workspace/map/map.dart';
@@ -144,9 +144,8 @@ class _InvestigationPageState extends State<InvestigationPage> {
         automaticallyImplyLeading: false,
         title: const MyMenuBar(),
       ),
-      body: Column(
-        children: [const ContentView(selectedIndex: 0), _buildTools()],
-      ),
+      body: const ContentView(selectedIndex: 0),
+      bottomNavigationBar: _buildTools(),
     );
   }
 }

@@ -1,7 +1,6 @@
 import 'package:knotwork/auth/auth_screen.dart';
 import 'package:flutter/material.dart';
-import 'package:knotwork/components/button.dart';
-import 'package:knotwork/policies_page.dart';
+import 'package:knotwork/components/squircle_button.dart';
 import 'package:provider/provider.dart';
 import 'package:knotwork/providers/theme_provider.dart';
 
@@ -22,17 +21,17 @@ class _SettingsPageState extends State<SettingsPage> {
   Widget build(BuildContext context) {
     var themeProvider = Provider.of<ThemeProvider>(context);
     return Scaffold(
-      appBar: AppBar(title: Text("Welcome Yeshaya!"),
-      automaticallyImplyLeading: false,
-      actions: [
-        IconButton(
-          onPressed: () {
-            Navigator.of(context).push(
-                MaterialPageRoute(builder: (context) => const Placeholder()));
-          },
-          icon: const Icon(Icons.person),
-        )
-      ]),
+      appBar: AppBar(
+          title: Text("Welcome Yeshaya!"),
+          automaticallyImplyLeading: false,
+          actions: [
+            IconButton(
+              onPressed: () {
+                Navigator.of(context).pushNamed("/account");
+              },
+              icon: const Icon(Icons.person),
+            )
+          ]),
       body: ListView(
         children: [
           // General Settings
@@ -72,17 +71,19 @@ class _SettingsPageState extends State<SettingsPage> {
             setState(() => incognitoMode = value);
           }),
 
-          _buildButtonTile(
-              "Policies",
-              () => Navigator.of(context).push(
-                  MaterialPageRoute(builder: (context) => PoliciesPage()))),
-
           _buildSwitchTile("Auto Logout", autoLogout, (value) {
             setState(() => autoLogout = value);
           }),
 
-          // logout
-          _buildButtonTile("Log out", () => logout(context)),
+          Row(
+            children: [
+              _buildButtonTile(
+                "Policies",
+                () => Navigator.of(context).pushNamed("/policies"),
+              ),
+              _buildButtonTile("Log out", () => logout(context)),
+            ],
+          )
         ],
       ),
     );
@@ -120,6 +121,8 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Widget _buildButtonTile(String value, VoidCallback action) {
-    return SquircleButton(onTap: action, title: value);
+    return Padding(
+        padding: EdgeInsetsGeometry.symmetric(horizontal: 16),
+        child: SquircleButton(onTap: action, title: value));
   }
 }

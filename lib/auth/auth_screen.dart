@@ -4,7 +4,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'dart:convert';
 import 'package:knotwork/components/input.dart';
-import 'package:knotwork/components/button.dart';
+import 'package:knotwork/components/squircle_button.dart';
 import 'package:passkeys/types.dart';
 import 'package:passkeys_android/passkeys_android.dart';
 import 'package:otp/otp.dart';

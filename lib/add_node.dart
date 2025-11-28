@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:knotwork/components/button.dart';
+import 'package:knotwork/components/squircle_button.dart';
 import 'package:knotwork/providers/graph/graph_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';

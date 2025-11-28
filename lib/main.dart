@@ -1,3 +1,4 @@
+import 'package:knotwork/account_page.dart';
 import 'package:knotwork/add_node.dart';
 import 'package:knotwork/providers/graph/graph_provider.dart';
 import 'package:knotwork/home_screen.dart';
@@ -100,9 +101,10 @@ class _MainAppState extends State<MainApp> {
         "/settings": (context) => SettingsPage(),
         "/timeline": (context) => TimelinesPage(),
         "/addNode": (context) => AddNodePage(),
+        "/account": (context) => AccountPage(),
       },
       debugShowCheckedModeBanner: false,
-      home: LoginPage(),
+      // home: LoginPage(),
     );
   }
 }

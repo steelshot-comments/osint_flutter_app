@@ -51,6 +51,7 @@ class SquircleButton extends StatelessWidget {
         color: gradient == null ? effectiveBackground : null,
       ),
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
         mainAxisSize: widthMode == SquircleButtonWidth.wrapContent
             ? MainAxisSize.min
             : MainAxisSize.max,
